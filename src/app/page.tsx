@@ -10,11 +10,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/trpc/react";
 import {
 	AlertCircle,
 	Calendar,
 	CheckCircle,
 	HelpCircle,
+	Loader2,
 	Search,
 	X,
 	XCircle,
@@ -30,14 +32,23 @@ export default function Home() {
 		followedOnly: false,
 	});
 
+	// Fetch posts from the database
+	const { data: postsData, isLoading } = api.posts.getAll.useQuery({
+		limit: 10,
+		filterByCredibility:
+			activeFilters.credibility.length > 0
+				? activeFilters.credibility
+				: undefined,
+		timeRange: activeFilters.timeRange,
+		searchQuery: searchQuery || undefined,
+	});
+
 	const handleSearch = (query: string) => {
 		setSearchQuery(query);
-		// In a real app, this would fetch filtered news posts from an API
 	};
 
 	const handleFilter = (filters: FilterOptions) => {
 		setActiveFilters(filters);
-		// In a real app, this would fetch filtered news posts from an API
 	};
 
 	return (
@@ -119,7 +130,7 @@ export default function Home() {
 												variant="secondary"
 												className="flex items-center gap-1"
 											>
-												{status === "verified" && (
+												{status === "true" && (
 													<CheckCircle className="h-3 w-3 text-green-600" />
 												)}
 												{status === "unverified" && (
@@ -222,86 +233,31 @@ export default function Home() {
 							</div>
 
 							<TabsContent value="latest" className="mt-2 space-y-4">
-								<NewsPost
-									user={{
-										name: "Sarah Johnson",
-										handle: "@sarahjournalist",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: true,
-										credibilityScore: 92,
-									}}
-									content="Breaking: New climate policy announced today will set ambitious targets for carbon reduction across all industries. The plan includes tax incentives for renewable energy adoption."
-									timestamp="2 hours ago"
-									credibilityTag="true"
-									reviewCount={124}
-									commentCount={37}
-									sources={["https://example.com/climate-policy"]}
-								/>
-
-								<NewsPost
-									user={{
-										name: "Tech Observer",
-										handle: "@techobserver",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: false,
-										credibilityScore: 78,
-									}}
-									content="AI startup claims breakthrough in quantum computing that could revolutionize data processing. The company says their new algorithm is 100x faster than current methods."
-									timestamp="4 hours ago"
-									credibilityTag="unverified"
-									reviewCount={56}
-									commentCount={23}
-									sources={["https://example.com/ai-breakthrough"]}
-								/>
-
-								<NewsPost
-									user={{
-										name: "Sports Update",
-										handle: "@sportsupdate",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: true,
-										credibilityScore: 88,
-									}}
-									content="National basketball team advances to semifinals after thrilling overtime victory. Star player scores career-high 42 points to lead the comeback."
-									timestamp="6 hours ago"
-									credibilityTag="true"
-									reviewCount={210}
-									commentCount={85}
-									sources={["https://example.com/basketball-semifinals"]}
-									hasMedia={true}
-								/>
-
-								<NewsPost
-									user={{
-										name: "Health News",
-										handle: "@healthnews",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: true,
-										credibilityScore: 90,
-									}}
-									content="New study suggests regular meditation may significantly reduce stress-related health issues. Researchers found participants showed improved immune response after 8 weeks."
-									timestamp="8 hours ago"
-									credibilityTag="true"
-									reviewCount={98}
-									commentCount={42}
-									sources={["https://example.com/meditation-study"]}
-								/>
-
-								<NewsPost
-									user={{
-										name: "City Reporter",
-										handle: "@cityreporter",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: false,
-										credibilityScore: 65,
-									}}
-									content="Local authorities announce major infrastructure project to begin next month. The project will reportedly create hundreds of jobs and improve transportation."
-									timestamp="10 hours ago"
-									credibilityTag="misleading"
-									reviewCount={76}
-									commentCount={31}
-									sources={["https://example.com/infrastructure-project"]}
-								/>
+								{isLoading ? (
+									<div className="flex items-center justify-center py-10">
+										<Loader2 className="h-8 w-8 animate-spin text-primary" />
+									</div>
+								) : postsData?.items && postsData.items.length > 0 ? (
+									postsData.items.map((post) => (
+										<NewsPost
+											key={post.id}
+											id={post.id}
+											user={post.user}
+											content={post.content}
+											timestamp={new Date(post.createdAt).toLocaleString()}
+											credibilityTag={post.consensusTag || "unverified"}
+											reviewCount={post.reviewCount}
+											commentCount={post.commentCount}
+											sources={post.sources}
+											hasMedia={post.hasMedia}
+										/>
+									))
+								) : (
+									<div className="py-10 text-center text-muted-foreground">
+										No posts found. Try adjusting your filters or be the first
+										to post!
+									</div>
+								)}
 							</TabsContent>
 
 							<TabsContent value="algorithmic" className="mt-2 space-y-4">

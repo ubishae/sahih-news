@@ -5,14 +5,8 @@ import { Geist } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/trpc/react";
-import {
-	ClerkProvider,
-	SignInButton,
-	SignUpButton,
-	SignedIn,
-	SignedOut,
-	UserButton,
-} from "@clerk/nextjs";
+import { ClerkLoaded, ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
 	title: "SahihNews - Verified News Platform",
@@ -39,16 +33,11 @@ export default function RootLayout({
 						enableSystem
 						disableTransitionOnChange
 					>
-						<header className="flex h-16 items-center justify-end gap-4 p-4">
-							<SignedOut>
-								<SignInButton />
-								<SignUpButton />
-							</SignedOut>
-							<SignedIn>
-								<UserButton />
-							</SignedIn>
-						</header>
-						<TRPCReactProvider>{children}</TRPCReactProvider>
+						<TRPCReactProvider>
+							{children}
+
+							<Toaster />
+						</TRPCReactProvider>
 					</ThemeProvider>
 				</body>
 			</html>

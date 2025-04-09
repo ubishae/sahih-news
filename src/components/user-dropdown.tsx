@@ -22,34 +22,65 @@ import {
 	User,
 } from "lucide-react";
 import Link from "next/link";
+import { api } from "@/trpc/react";
+import { useUser, SignOutButton } from "@clerk/nextjs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function UserDropdown() {
-	// Sample user data - in a real app, this would come from authentication context
-	const user = {
-		name: "Alex Johnson",
-		handle: "@alexj",
-		avatar: "/placeholder.svg?height=32&width=32",
-		initials: "AJ",
-		credibilityScore: 85,
-		badge: "Trustworthy Contributor",
-	};
+	const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+	const { data: userData, isLoading } = api.user.getCurrentUser.useQuery(
+		undefined,
+		{
+			enabled: !!clerkUser?.id,
+		},
+	);
+
+	// If clerk is not loaded or user data is loading, show loading state
+	if (!isClerkLoaded || isLoading) {
+		return (
+			<Button variant="ghost" className="relative h-8 w-8 rounded-full">
+				<Skeleton className="h-8 w-8 rounded-full" />
+			</Button>
+		);
+	}
+
+	// If no user is logged in, return null or a sign-in button
+	if (!clerkUser || !userData) {
+		return null;
+	}
+
+	// Get user initials from display name
+	const initials = userData.displayName
+		.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.substring(0, 2);
+
+	// Check if user has fact_checker role from Clerk
+	const isFactChecker = clerkUser.publicMetadata?.role === "fact_checker";
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button variant="ghost" className="relative h-8 w-8 rounded-full">
 					<Avatar className="h-8 w-8">
-						<AvatarImage src={user.avatar} alt={user.name} />
-						<AvatarFallback>{user.initials}</AvatarFallback>
+						<AvatarImage
+							src={userData.profileImageUrl || ""}
+							alt={userData.displayName}
+						/>
+						<AvatarFallback>{initials}</AvatarFallback>
 					</Avatar>
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent className="w-56" align="end" forceMount>
 				<DropdownMenuLabel className="font-normal">
 					<div className="flex flex-col space-y-1">
-						<p className="font-medium text-sm leading-none">{user.name}</p>
+						<p className="font-medium text-sm leading-none">
+							{userData.displayName}
+						</p>
 						<p className="text-muted-foreground text-xs leading-none">
-							{user.handle}
+							@{userData.username}
 						</p>
 					</div>
 				</DropdownMenuLabel>
@@ -65,17 +96,23 @@ export function UserDropdown() {
 							variant="outline"
 							className="bg-green-100 text-green-800 text-xs dark:bg-green-900/20 dark:text-green-400"
 						>
-							{user.badge}
+							{userData.credibilityScore >= 80
+								? "Trustworthy Contributor"
+								: userData.credibilityScore >= 60
+									? "Reliable Member"
+									: "Community Member"}
 						</Badge>
 					</div>
 					<div className="flex items-center gap-2">
 						<div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
 							<div
 								className="h-full bg-green-500"
-								style={{ width: `${user.credibilityScore}%` }}
+								style={{ width: `${userData.credibilityScore}%` }}
 							/>
 						</div>
-						<span className="font-medium text-sm">{user.credibilityScore}</span>
+						<span className="font-medium text-sm">
+							{userData.credibilityScore}
+						</span>
 					</div>
 				</div>
 
@@ -120,15 +157,17 @@ export function UserDropdown() {
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
-					<DropdownMenuItem asChild>
-						<Link
-							href="/become-reviewer"
-							className="flex cursor-pointer items-center"
-						>
-							<Shield className="mr-2 h-4 w-4" />
-							<span>Become a Reviewer</span>
-						</Link>
-					</DropdownMenuItem>
+					{!isFactChecker && (
+						<DropdownMenuItem asChild>
+							<Link
+								href="/become-reviewer"
+								className="flex cursor-pointer items-center"
+							>
+								<Shield className="mr-2 h-4 w-4" />
+								<span>Become a Reviewer</span>
+							</Link>
+						</DropdownMenuItem>
+					)}
 					<DropdownMenuItem asChild>
 						<Link href="/help" className="flex cursor-pointer items-center">
 							<HelpCircle className="mr-2 h-4 w-4" />
@@ -138,8 +177,12 @@ export function UserDropdown() {
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem className="cursor-pointer">
-					<LogOut className="mr-2 h-4 w-4" />
-					<span>Log out</span>
+					<SignOutButton>
+						<div className="flex items-center">
+							<LogOut className="mr-2 h-4 w-4" />
+							<span>Log out</span>
+						</div>
+					</SignOutButton>
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

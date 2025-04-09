@@ -5,16 +5,10 @@ import { relations, sql } from "drizzle-orm";
 import {
 	index,
 	pgTableCreator,
-	text,
-	timestamp,
-	integer,
-	boolean,
 	pgEnum,
-	json,
-	varchar,
-	primaryKey,
 	uniqueIndex,
 	foreignKey,
+	primaryKey,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -26,12 +20,6 @@ import {
 export const createTable = pgTableCreator((name) => `sahih-news_${name}`);
 
 // Enums
-export const userRoleEnum = pgEnum("user_role", [
-	"user",
-	"journalist",
-	"moderator",
-	"fact_checker",
-]);
 export const credibilityTagEnum = pgEnum("credibility_tag", [
 	"true",
 	"false",
@@ -68,7 +56,6 @@ export const users = createTable(
 		displayName: d.varchar({ length: 100 }).notNull(),
 		bio: d.text(),
 		credibilityScore: d.integer().default(50).notNull(),
-		role: userRoleEnum("role").default("user").notNull(),
 		isVerified: d.boolean().default(false).notNull(),
 		profileImageUrl: d.text(),
 		createdAt: d
@@ -77,7 +64,7 @@ export const users = createTable(
 			.notNull(),
 		updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
 	}),
-	(t) => [index("username_idx").on(t.username), index("role_idx").on(t.role)],
+	(t) => [index("username_idx").on(t.username)],
 );
 
 export const follows = createTable(

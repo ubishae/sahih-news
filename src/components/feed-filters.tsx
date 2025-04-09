@@ -51,7 +51,7 @@ interface FeedFiltersProps {
 export interface FilterOptions {
 	categories: string[];
 	credibility: string[];
-	timeRange: string;
+	timeRange: "all" | "today" | "week" | "month" | "year";
 	followedOnly: boolean;
 }
 
@@ -90,7 +90,7 @@ export default function FeedFilters({ onSearch, onFilter }: FeedFiltersProps) {
 	// Available credibility statuses
 	const credibilityStatuses = [
 		{
-			value: "verified",
+			value: "true",
 			label: "Verified",
 			icon: <CheckCircle className="h-3.5 w-3.5 text-green-600" />,
 		},
@@ -165,7 +165,7 @@ export default function FeedFilters({ onSearch, onFilter }: FeedFiltersProps) {
 	};
 
 	// Set time range
-	const setTimeRange = (range: string, isTemp = false) => {
+	const setTimeRange = (range: "all" | "today" | "week" | "month" | "year", isTemp = false) => {
 		if (isTemp) {
 			setTempFilters({ ...tempFilters, timeRange: range });
 		} else {
@@ -194,7 +194,7 @@ export default function FeedFilters({ onSearch, onFilter }: FeedFiltersProps) {
 
 	// Reset filters
 	const resetFilters = (isTemp = false) => {
-		const defaultFilters = {
+		const defaultFilters: FilterOptions = {
 			categories: [],
 			credibility: [],
 			timeRange: "all",
@@ -295,7 +295,7 @@ export default function FeedFilters({ onSearch, onFilter }: FeedFiltersProps) {
 						<h3 className="font-medium text-sm">Time Range</h3>
 						<Select
 							value={tempFilters.timeRange}
-							onValueChange={(value) => setTimeRange(value, true)}
+							onValueChange={(value) => setTimeRange(value as "all" | "today" | "week" | "month" | "year", true)}
 						>
 							<SelectTrigger className="w-full">
 								<SelectValue placeholder="Select time range" />
@@ -455,7 +455,7 @@ export default function FeedFilters({ onSearch, onFilter }: FeedFiltersProps) {
 						<h4 className="font-medium text-sm">Time Range</h4>
 						<Select
 							value={activeFilters.timeRange}
-							onValueChange={(value) => setTimeRange(value)}
+							onValueChange={(value) => setTimeRange(value as "all" | "today" | "week" | "month" | "year")}
 						>
 							<SelectTrigger className="w-full">
 								<SelectValue placeholder="Select time range" />
@@ -523,7 +523,7 @@ export default function FeedFilters({ onSearch, onFilter }: FeedFiltersProps) {
 									}
 									className="w-full justify-start"
 									size="sm"
-									onClick={() => setTimeRange(range.value)}
+									onClick={() => setTimeRange(range.value as "all" | "today" | "week" | "month" | "year")}
 								>
 									{range.label}
 								</Button>

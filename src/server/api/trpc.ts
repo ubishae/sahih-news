@@ -26,7 +26,7 @@ import { currentUser } from "@clerk/nextjs/server";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-	const user = currentUser();
+	const user = await currentUser();
 
 	return {
 		db,

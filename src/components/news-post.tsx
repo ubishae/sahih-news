@@ -49,6 +49,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import RichTextPreview from "./rich-text-preview";
+import { api } from "@/trpc/react";
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 interface User {
 	name: string;
@@ -59,6 +62,7 @@ interface User {
 }
 
 interface NewsPostProps {
+	id: number;
 	user: User;
 	content: string;
 	timestamp: string;
@@ -70,6 +74,7 @@ interface NewsPostProps {
 }
 
 export default function NewsPost({
+	id,
 	user,
 	content,
 	timestamp,
@@ -80,10 +85,6 @@ export default function NewsPost({
 	hasMedia = false,
 }: NewsPostProps) {
 	// State for user interactions
-	const [isBookmarked, setIsBookmarked] = useState(false);
-	const [userReaction, setUserReaction] = useState<
-		"accurate" | "inaccurate" | null
-	>(null);
 	const [showCommentDialog, setShowCommentDialog] = useState(false);
 	const [showReviewDialog, setShowReviewDialog] = useState(false);
 	const [showShareDialog, setShowShareDialog] = useState(false);
@@ -93,40 +94,147 @@ export default function NewsPost({
 		"true" | "false" | "misleading" | "unverified"
 	>("unverified");
 
+	const { isSignedIn } = useUser();
+
+	// Get user's reaction to this post
+	const { data: userReaction, refetch: refetchReaction } =
+		api.postInteraction.getUserReaction.useQuery(
+			{ postId: id },
+			{ enabled: !!isSignedIn },
+		);
+
+	// Check if user has bookmarked this post
+	const { data: isBookmarked, refetch: refetchBookmark } =
+		api.postInteraction.isBookmarked.useQuery(
+			{ postId: id },
+			{ enabled: !!isSignedIn },
+		);
+
+	// Mutations
+	const addReactionMutation = api.postInteraction.addReaction.useMutation({
+		onSuccess: () => {
+			void refetchReaction();
+		},
+	});
+
+	const toggleBookmarkMutation = api.postInteraction.toggleBookmark.useMutation(
+		{
+			onSuccess: () => {
+				void refetchBookmark();
+			},
+		},
+	);
+
+	const addCommentMutation = api.postInteraction.addComment.useMutation({
+		onSuccess: () => {
+			setCommentText("");
+			setShowCommentDialog(false);
+			toast("Comment added", {
+				description: "Your comment has been posted successfully.",
+			});
+		},
+	});
+
+	const addReviewMutation = api.postInteraction.addReview.useMutation({
+		onSuccess: () => {
+			setReviewReason("");
+			setShowReviewDialog(false);
+			toast("Review submitted", {
+				description: "Thank you for helping verify this news.",
+			});
+		},
+	});
+
+	// Check if mutations are loading
+	const isAddingComment = addCommentMutation.isPending;
+	const isAddingReview = addReviewMutation.isPending;
+
 	// Handle user reactions
 	const handleReaction = (reaction: "accurate" | "inaccurate") => {
-		setUserReaction(userReaction === reaction ? null : reaction);
+		if (!isSignedIn) {
+			toast("Authentication required", {
+				description: "Please sign in to react to posts.",
+				style: { backgroundColor: "hsl(var(--destructive))", color: "white" },
+			});
+			return;
+		}
+
+		addReactionMutation.mutate({
+			postId: id,
+			type: reaction,
+		});
 	};
 
 	// Handle bookmark toggle
 	const toggleBookmark = () => {
-		setIsBookmarked(!isBookmarked);
+		if (!isSignedIn) {
+			toast("Authentication required", {
+				description: "Please sign in to bookmark posts.",
+				style: { backgroundColor: "hsl(var(--destructive))", color: "white" },
+			});
+			return;
+		}
+
+		toggleBookmarkMutation.mutate({ postId: id });
 	};
 
 	// Handle comment submission
 	const submitComment = () => {
-		// In a real app, this would send the comment to an API
-		console.log("Comment submitted:", commentText);
-		setCommentText("");
-		setShowCommentDialog(false);
+		if (!isSignedIn) {
+			toast("Authentication required", {
+				description: "Please sign in to comment.",
+				style: { backgroundColor: "hsl(var(--destructive))", color: "white" },
+			});
+			return;
+		}
+
+		if (!commentText.trim()) {
+			toast("Empty comment", {
+				description: "Please enter a comment before submitting.",
+				style: { backgroundColor: "hsl(var(--destructive))", color: "white" },
+			});
+			return;
+		}
+
+		addCommentMutation.mutate({
+			postId: id,
+			content: commentText,
+		});
 	};
 
 	// Handle review submission
 	const submitReview = () => {
-		// In a real app, this would send the review to an API
-		console.log("Review submitted:", {
-			verdict: reviewVerdict,
-			reason: reviewReason,
+		if (!isSignedIn) {
+			toast("Authentication required", {
+				description: "Please sign in to submit a review.",
+				style: { backgroundColor: "hsl(var(--destructive))", color: "white" },
+			});
+			return;
+		}
+
+		if (!reviewReason.trim()) {
+			toast("Review reason required", {
+				description: "Please provide a reason for your credibility assessment.",
+				style: { backgroundColor: "hsl(var(--destructive))", color: "white" },
+			});
+			return;
+		}
+
+		addReviewMutation.mutate({
+			postId: id,
+			credibilityTag: reviewVerdict,
+			comment: reviewReason,
 		});
-		setReviewReason("");
-		setShowReviewDialog(false);
 	};
 
 	// Handle share
 	const copyToClipboard = () => {
 		// In a real app, this would copy the actual URL
-		navigator.clipboard.writeText(`https://sahihnews.com/post/123`);
+		navigator.clipboard.writeText(`https://sahihnews.com/post/${id}`);
 		setShowShareDialog(false);
+		toast("Link copied", {
+			description: "Post link copied to clipboard.",
+		});
 	};
 
 	const getCredibilityBadge = () => {
@@ -241,78 +349,111 @@ export default function NewsPost({
 										Review credibility
 									</DropdownMenuItem>
 								</DialogTrigger>
-								<DialogContent className="sm:max-w-[425px]">
+								<DialogContent className="sm:max-w-md">
 									<DialogHeader>
 										<DialogTitle>Review Credibility</DialogTitle>
 										<DialogDescription>
-											Help maintain the integrity of SahihNews by reviewing this
-											content.
+											Help others by reviewing the credibility of this post.
 										</DialogDescription>
 									</DialogHeader>
 									<div className="grid gap-4 py-4">
 										<RadioGroup
 											value={reviewVerdict}
-											onValueChange={(value) => setReviewVerdict(value as any)}
+											onValueChange={(value) =>
+												setReviewVerdict(
+													value as
+														| "true"
+														| "false"
+														| "misleading"
+														| "unverified",
+												)
+											}
 										>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="true" id="true" />
+												<RadioGroupItem
+													value="true"
+													id="true"
+													className="border-green-500 text-green-500"
+												/>
 												<Label
 													htmlFor="true"
-													className="flex items-center gap-1"
+													className="flex cursor-pointer items-center gap-1 font-normal"
 												>
-													<CheckCircle className="h-4 w-4 text-green-600" />
+													<CheckCircle className="h-4 w-4 text-green-500" />{" "}
 													True
 												</Label>
 											</div>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="false" id="false" />
+												<RadioGroupItem
+													value="false"
+													id="false"
+													className="border-red-500 text-red-500"
+												/>
 												<Label
 													htmlFor="false"
-													className="flex items-center gap-1"
+													className="flex cursor-pointer items-center gap-1 font-normal"
 												>
-													<XCircle className="h-4 w-4 text-red-600" />
-													False
+													<XCircle className="h-4 w-4 text-red-500" /> False
 												</Label>
 											</div>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="misleading" id="misleading" />
+												<RadioGroupItem
+													value="misleading"
+													id="misleading"
+													className="border-yellow-500 text-yellow-500"
+												/>
 												<Label
 													htmlFor="misleading"
-													className="flex items-center gap-1"
+													className="flex cursor-pointer items-center gap-1 font-normal"
 												>
-													<AlertCircle className="h-4 w-4 text-orange-600" />
+													<AlertCircle className="h-4 w-4 text-yellow-500" />{" "}
 													Misleading
 												</Label>
 											</div>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="unverified" id="unverified" />
+												<RadioGroupItem
+													value="unverified"
+													id="unverified"
+													className="border-gray-500 text-gray-500"
+												/>
 												<Label
 													htmlFor="unverified"
-													className="flex items-center gap-1"
+													className="flex cursor-pointer items-center gap-1 font-normal"
 												>
-													<HelpCircle className="h-4 w-4 text-yellow-600" />
+													<HelpCircle className="h-4 w-4 text-gray-500" />{" "}
 													Unverified
 												</Label>
 											</div>
 										</RadioGroup>
 										<div className="grid gap-2">
-											<Label htmlFor="reason">Reason for your review</Label>
+											<Label htmlFor="comment" className="text-left">
+												Provide evidence or reasoning
+											</Label>
 											<Textarea
-												id="reason"
-												placeholder="Provide evidence or reasoning for your review..."
+												id="comment"
+												placeholder="Explain why you believe this information is true, false, misleading, or unverified..."
 												value={reviewReason}
 												onChange={(e) => setReviewReason(e.target.value)}
+												className="min-h-[100px]"
 											/>
 										</div>
 									</div>
-									<DialogFooter>
+									<DialogFooter className="sm:justify-start">
 										<Button
-											variant="outline"
+											type="button"
+											variant="default"
+											onClick={submitReview}
+											disabled={isAddingReview}
+										>
+											{isAddingReview ? "Submitting..." : "Submit Review"}
+										</Button>
+										<Button
+											type="button"
+											variant="secondary"
 											onClick={() => setShowReviewDialog(false)}
 										>
 											Cancel
 										</Button>
-										<Button onClick={submitReview}>Submit Review</Button>
 									</DialogFooter>
 								</DialogContent>
 							</Dialog>
@@ -373,7 +514,11 @@ export default function NewsPost({
 								<Button
 									variant="ghost"
 									size="sm"
-									className={`h-8 px-2 ${userReaction === "accurate" ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" : ""}`}
+									className={`h-8 px-2 ${
+										userReaction === "accurate"
+											? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+											: ""
+									}`}
 									onClick={() => handleReaction("accurate")}
 								>
 									<ThumbsUp className="mr-1 h-4 w-4" />
@@ -392,7 +537,11 @@ export default function NewsPost({
 								<Button
 									variant="ghost"
 									size="sm"
-									className={`h-8 px-2 ${userReaction === "inaccurate" ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400" : ""}`}
+									className={`h-8 px-2 ${
+										userReaction === "inaccurate"
+											? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+											: ""
+									}`}
 									onClick={() => handleReaction("inaccurate")}
 								>
 									<ThumbsDown className="mr-1 h-4 w-4" />
@@ -413,30 +562,42 @@ export default function NewsPost({
 								{commentCount}
 							</Button>
 						</DialogTrigger>
-						<DialogContent className="sm:max-w-[425px]">
+						<DialogContent className="sm:max-w-md">
 							<DialogHeader>
 								<DialogTitle>Add Comment</DialogTitle>
 								<DialogDescription>
-									Share your thoughts on this news item.
+									Share your thoughts about this post.
 								</DialogDescription>
 							</DialogHeader>
 							<div className="grid gap-4 py-4">
-								<Textarea
-									placeholder="Write your comment..."
-									value={commentText}
-									onChange={(e) => setCommentText(e.target.value)}
-									className="min-h-[100px]"
-								/>
+								<div className="grid gap-2">
+									<Label htmlFor="comment-text" className="text-left">
+										Your comment
+									</Label>
+									<Textarea
+										id="comment-text"
+										placeholder="What are your thoughts on this post?"
+										value={commentText}
+										onChange={(e) => setCommentText(e.target.value)}
+										className="min-h-[100px]"
+									/>
+								</div>
 							</div>
-							<DialogFooter>
+							<DialogFooter className="sm:justify-start">
 								<Button
-									variant="outline"
+									type="button"
+									variant="default"
+									onClick={submitComment}
+									disabled={isAddingComment}
+								>
+									{isAddingComment ? "Posting..." : "Post Comment"}
+								</Button>
+								<Button
+									type="button"
+									variant="secondary"
 									onClick={() => setShowCommentDialog(false)}
 								>
 									Cancel
-								</Button>
-								<Button onClick={submitComment} disabled={!commentText.trim()}>
-									Post Comment
 								</Button>
 							</DialogFooter>
 						</DialogContent>
@@ -458,7 +619,7 @@ export default function NewsPost({
 							<div className="grid gap-4 py-4">
 								<div className="flex items-center justify-between rounded-md border p-2">
 									<span className="truncate text-sm">
-										https://sahihnews.com/post/123
+										https://sahihnews.com/post/{id}
 									</span>
 									<Button variant="ghost" size="sm" onClick={copyToClipboard}>
 										<Copy className="h-4 w-4" />
@@ -474,7 +635,7 @@ export default function NewsPost({
 											fill="currentColor"
 											viewBox="0 0 24 24"
 										>
-											<path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"></path>
+											<path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
 										</svg>
 										<span className="mt-1 text-xs">Twitter</span>
 									</Button>
@@ -487,7 +648,7 @@ export default function NewsPost({
 											fill="currentColor"
 											viewBox="0 0 24 24"
 										>
-											<path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"></path>
+											<path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
 										</svg>
 										<span className="mt-1 text-xs">Facebook</span>
 									</Button>
@@ -500,7 +661,7 @@ export default function NewsPost({
 											fill="currentColor"
 											viewBox="0 0 24 24"
 										>
-											<path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path>
+											<path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
 										</svg>
 										<span className="mt-1 text-xs">LinkedIn</span>
 									</Button>
@@ -513,7 +674,7 @@ export default function NewsPost({
 											fill="currentColor"
 											viewBox="0 0 24 24"
 										>
-											<path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"></path>
+											<path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
 										</svg>
 										<span className="mt-1 text-xs">WhatsApp</span>
 									</Button>
