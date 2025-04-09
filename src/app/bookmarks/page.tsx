@@ -24,11 +24,11 @@ import {
 	Search,
 	Trash2,
 } from "lucide-react";
+import { api } from "@/trpc/server";
+import { Suspense } from "react";
+import { LoadingSpinner } from "@/components/loading-spinner";
 
 export default function BookmarksPage() {
-	// Sample bookmarks data - in a real app, this would come from an API or state
-	const hasBookmarks = true;
-
 	return (
 		<div className="min-h-screen bg-background">
 			<Header />
@@ -93,293 +93,10 @@ export default function BookmarksPage() {
 						</TabsTrigger>
 					</TabsList>
 
-					{hasBookmarks ? (
-						<>
-							<TabsContent value="all" className="space-y-4">
-								<div className="mb-2 flex items-center justify-between">
-									<div className="text-muted-foreground text-sm">
-										12 bookmarks
-									</div>
-									<Select defaultValue="recent">
-										<SelectTrigger className="w-[150px]">
-											<SelectValue placeholder="Sort By" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="recent">Most Recent</SelectItem>
-											<SelectItem value="oldest">Oldest First</SelectItem>
-											<SelectItem value="credibility">
-												Highest Credibility
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-
-								<NewsPost
-									user={{
-										name: "Global Affairs",
-										handle: "@globalaffairs",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: true,
-										credibilityScore: 94,
-									}}
-									content="BREAKING: International summit on climate change reaches historic agreement. All major economies commit to 50% emissions reduction by 2035."
-									timestamp="Saved 2 hours ago"
-									credibilityTag="true"
-									reviewCount={342}
-									commentCount={128}
-									sources={["https://example.com/climate-summit"]}
-									hasMedia={true}
-								/>
-
-								<NewsPost
-									user={{
-										name: "Science Today",
-										handle: "@sciencetoday",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: true,
-										credibilityScore: 91,
-									}}
-									content="Scientists discover potential breakthrough in renewable energy storage. New material could store solar energy for months without degradation."
-									timestamp="Saved yesterday"
-									credibilityTag="unverified"
-									reviewCount={187}
-									commentCount={76}
-									sources={["https://example.com/energy-breakthrough"]}
-								/>
-
-								<NewsPost
-									user={{
-										name: "Health Insights",
-										handle: "@healthinsights",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: false,
-										credibilityScore: 72,
-									}}
-									content="New diet claims to reverse aging process and extend lifespan by up to 20 years. Experts remain skeptical about extraordinary claims."
-									timestamp="Saved 3 days ago"
-									credibilityTag="misleading"
-									reviewCount={231}
-									commentCount={98}
-									sources={["https://example.com/diet-claims"]}
-								/>
-
-								<NewsPost
-									user={{
-										name: "Tech Insider",
-										handle: "@techinsider",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: true,
-										credibilityScore: 89,
-									}}
-									content="Major tech company announces revolutionary AI assistant that can understand and respond to complex human emotions."
-									timestamp="Saved 5 days ago"
-									credibilityTag="unverified"
-									reviewCount={78}
-									commentCount={34}
-									sources={["https://example.com/ai-assistant"]}
-								/>
-							</TabsContent>
-
-							<TabsContent value="read-later" className="space-y-4">
-								<div className="mb-2 flex items-center justify-between">
-									<div className="text-muted-foreground text-sm">
-										5 bookmarks
-									</div>
-									<Select defaultValue="recent">
-										<SelectTrigger className="w-[150px]">
-											<SelectValue placeholder="Sort By" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="recent">Most Recent</SelectItem>
-											<SelectItem value="oldest">Oldest First</SelectItem>
-											<SelectItem value="credibility">
-												Highest Credibility
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-
-								<NewsPost
-									user={{
-										name: "Science Today",
-										handle: "@sciencetoday",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: true,
-										credibilityScore: 91,
-									}}
-									content="Scientists discover potential breakthrough in renewable energy storage. New material could store solar energy for months without degradation."
-									timestamp="Saved yesterday"
-									credibilityTag="unverified"
-									reviewCount={187}
-									commentCount={76}
-									sources={["https://example.com/energy-breakthrough"]}
-								/>
-
-								<NewsPost
-									user={{
-										name: "Tech Insider",
-										handle: "@techinsider",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: true,
-										credibilityScore: 89,
-									}}
-									content="Major tech company announces revolutionary AI assistant that can understand and respond to complex human emotions."
-									timestamp="Saved 5 days ago"
-									credibilityTag="unverified"
-									reviewCount={78}
-									commentCount={34}
-									sources={["https://example.com/ai-assistant"]}
-								/>
-							</TabsContent>
-
-							<TabsContent value="fact-checked" className="space-y-4">
-								<div className="mb-2 flex items-center justify-between">
-									<div className="text-muted-foreground text-sm">
-										3 bookmarks
-									</div>
-									<Select defaultValue="recent">
-										<SelectTrigger className="w-[150px]">
-											<SelectValue placeholder="Sort By" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="recent">Most Recent</SelectItem>
-											<SelectItem value="oldest">Oldest First</SelectItem>
-											<SelectItem value="credibility">
-												Highest Credibility
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-
-								<NewsPost
-									user={{
-										name: "Global Affairs",
-										handle: "@globalaffairs",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: true,
-										credibilityScore: 94,
-									}}
-									content="BREAKING: International summit on climate change reaches historic agreement. All major economies commit to 50% emissions reduction by 2035."
-									timestamp="Saved 2 hours ago"
-									credibilityTag="true"
-									reviewCount={342}
-									commentCount={128}
-									sources={["https://example.com/climate-summit"]}
-									hasMedia={true}
-								/>
-							</TabsContent>
-
-							<TabsContent value="research" className="space-y-4">
-								<div className="mb-2 flex items-center justify-between">
-									<div className="text-muted-foreground text-sm">
-										4 bookmarks
-									</div>
-									<Select defaultValue="recent">
-										<SelectTrigger className="w-[150px]">
-											<SelectValue placeholder="Sort By" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="recent">Most Recent</SelectItem>
-											<SelectItem value="oldest">Oldest First</SelectItem>
-											<SelectItem value="credibility">
-												Highest Credibility
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-
-								<NewsPost
-									user={{
-										name: "Health Insights",
-										handle: "@healthinsights",
-										avatar: "/placeholder.svg?height=40&width=40",
-										isVerified: false,
-										credibilityScore: 72,
-									}}
-									content="New diet claims to reverse aging process and extend lifespan by up to 20 years. Experts remain skeptical about extraordinary claims."
-									timestamp="Saved 3 days ago"
-									credibilityTag="misleading"
-									reviewCount={231}
-									commentCount={98}
-									sources={["https://example.com/diet-claims"]}
-								/>
-							</TabsContent>
-
-							<TabsContent value="new">
-								<Card>
-									<CardContent className="pt-6">
-										<div className="flex flex-col items-center justify-center space-y-4 p-6 text-center">
-											<FolderPlus className="h-12 w-12 text-muted-foreground" />
-											<h3 className="font-medium text-lg">
-												Create a New Collection
-											</h3>
-											<p className="max-w-md text-muted-foreground">
-												Organize your bookmarks into collections for easier
-												access and better organization.
-											</p>
-											<div className="w-full max-w-sm space-y-4">
-												<Input placeholder="Collection Name" />
-												<Select defaultValue="public">
-													<SelectTrigger>
-														<SelectValue placeholder="Visibility" />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value="public">Public</SelectItem>
-														<SelectItem value="private">Private</SelectItem>
-													</SelectContent>
-												</Select>
-												<Button className="w-full">Create Collection</Button>
-											</div>
-										</div>
-									</CardContent>
-								</Card>
-							</TabsContent>
-						</>
-					) : (
-						<EmptyState
-							icon={<Bookmark className="h-12 w-12 text-muted-foreground" />}
-							title="No bookmarks yet"
-							description="Save news and stories to read later by clicking the bookmark icon on any post."
-							action={<Button>Browse News</Button>}
-						/>
-					)}
+					<Suspense fallback={<BookmarksLoading />}>
+						<BookmarksContent />
+					</Suspense>
 				</Tabs>
-
-				{/* Bookmark management */}
-				{hasBookmarks && (
-					<Card className="mb-6">
-						<CardHeader className="pb-2">
-							<CardTitle className="font-medium text-base">
-								Manage Bookmarks
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="pt-0">
-							<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-								<Button
-									variant="outline"
-									className="flex items-center justify-center"
-								>
-									<Trash2 className="mr-2 h-4 w-4" />
-									Clear Read Items
-								</Button>
-								<Button
-									variant="outline"
-									className="flex items-center justify-center"
-								>
-									<CheckCircle className="mr-2 h-4 w-4" />
-									Mark All as Read
-								</Button>
-								<Button
-									variant="outline"
-									className="flex items-center justify-center"
-								>
-									<FolderPlus className="mr-2 h-4 w-4" />
-									Export Bookmarks
-								</Button>
-							</div>
-						</CardContent>
-					</Card>
-				)}
 
 				{/* Recently viewed */}
 				<Card>
@@ -431,5 +148,177 @@ export default function BookmarksPage() {
 				</Card>
 			</main>
 		</div>
+	);
+}
+
+function BookmarksLoading() {
+	return (
+		<div className="flex flex-col items-center justify-center py-12">
+			<LoadingSpinner size="lg" />
+			<p className="mt-4 text-muted-foreground">Loading your bookmarks...</p>
+		</div>
+	);
+}
+
+async function BookmarksContent() {
+	// Fetch bookmarks from the API
+	const bookmarksData = await api.bookmarks.getBookmarks({
+		limit: 20,
+		collection: "all",
+		sortBy: "recent",
+	});
+
+	const hasBookmarks = bookmarksData.items.length > 0;
+
+	return (
+		<>
+			{hasBookmarks ? (
+				<>
+					<TabsContent value="all" className="space-y-4">
+						<div className="mb-2 flex items-center justify-between">
+							<div className="text-muted-foreground text-sm">
+								{bookmarksData.totalCount} bookmark
+								{bookmarksData.totalCount !== 1 ? "s" : ""}
+							</div>
+							<Select defaultValue="recent">
+								<SelectTrigger className="w-[150px]">
+									<SelectValue placeholder="Sort By" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="recent">Most Recent</SelectItem>
+									<SelectItem value="oldest">Oldest First</SelectItem>
+									<SelectItem value="credibility">
+										Highest Credibility
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						{bookmarksData.items.map((bookmark) => (
+							<NewsPost
+								key={bookmark.id}
+								id={bookmark.postId}
+								user={bookmark.user}
+								content={bookmark.content}
+								timestamp={bookmark.createdAt.toISOString()}
+								credibilityTag={bookmark.consensusTag || "unverified"}
+								reviewCount={bookmark.reviewCount}
+								commentCount={bookmark.commentCount}
+								sources={bookmark.sources || []}
+								hasMedia={bookmark.hasMedia}
+							/>
+						))}
+
+						{bookmarksData.hasMore && (
+							<div className="flex justify-center pt-4">
+								<Button variant="outline">Load More</Button>
+							</div>
+						)}
+					</TabsContent>
+
+					<TabsContent value="read-later" className="space-y-4">
+						<EmptyState
+							icon={<Clock className="h-12 w-12 text-muted-foreground" />}
+							title="No items in Read Later"
+							description="Add posts to your Read Later collection to view them here."
+							action={<Button variant="outline">Browse News</Button>}
+						/>
+					</TabsContent>
+
+					<TabsContent value="fact-checked" className="space-y-4">
+						<EmptyState
+							icon={<CheckCircle className="h-12 w-12 text-muted-foreground" />}
+							title="No fact-checked bookmarks"
+							description="Bookmark fact-checked news to view them here."
+							action={<Button variant="outline">Browse Verified News</Button>}
+						/>
+					</TabsContent>
+
+					<TabsContent value="research" className="space-y-4">
+						<EmptyState
+							icon={
+								<AlertTriangle className="h-12 w-12 text-muted-foreground" />
+							}
+							title="No research bookmarks"
+							description="Save news for research to view them here."
+							action={<Button variant="outline">Browse News</Button>}
+						/>
+					</TabsContent>
+
+					<TabsContent value="new">
+						<Card>
+							<CardContent className="pt-6">
+								<div className="flex flex-col items-center space-y-4 text-center">
+									<FolderPlus className="h-12 w-12 text-muted-foreground" />
+									<h3 className="font-medium text-lg">
+										Create a New Collection
+									</h3>
+									<p className="max-w-md text-muted-foreground">
+										Organize your bookmarks into collections for easier access
+										and better organization.
+									</p>
+									<div className="w-full max-w-sm space-y-4">
+										<Input placeholder="Collection Name" />
+										<Select defaultValue="public">
+											<SelectTrigger>
+												<SelectValue placeholder="Visibility" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="public">Public</SelectItem>
+												<SelectItem value="private">Private</SelectItem>
+											</SelectContent>
+										</Select>
+										<Button className="w-full">Create Collection</Button>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+					</TabsContent>
+				</>
+			) : (
+				<EmptyState
+					icon={<Bookmark className="h-12 w-12 text-muted-foreground" />}
+					title="No bookmarks yet"
+					description="Save news and stories to read later by clicking the bookmark icon on any post."
+					action={<Button>Browse News</Button>}
+				/>
+			)}
+
+			{/* Bookmark management */}
+			{hasBookmarks && (
+				<Card className="mb-6">
+					<CardHeader className="pb-2">
+						<CardTitle className="font-medium text-base">
+							Manage Bookmarks
+						</CardTitle>
+					</CardHeader>
+					<CardContent className="pt-0">
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+							<Button
+								variant="outline"
+								className="flex items-center justify-center"
+							>
+								<Trash2 className="mr-2 h-4 w-4" />
+								Clear Read Items
+							</Button>
+							<Button
+								variant="outline"
+								className="flex items-center justify-center"
+							>
+								<CheckCircle className="mr-2 h-4 w-4" />
+								Mark All as Read
+							</Button>
+							<Button
+								variant="outline"
+								className="flex items-center justify-center"
+							>
+								<FolderPlus className="mr-2 h-4 w-4" />
+								Export Bookmarks
+							</Button>
+						</div>
+					</CardContent>
+				</Card>
+			)}
+		</>
 	);
 }
