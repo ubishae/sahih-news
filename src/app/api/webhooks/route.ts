@@ -8,10 +8,10 @@ import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
 	// Get the webhook signing secret from the environment variables
-	const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
+	const WEBHOOK_SECRET = process.env.SIGNING_SECRET;
 
 	if (!WEBHOOK_SECRET) {
-		console.error("Missing CLERK_WEBHOOK_SECRET env variable");
+		console.error("Missing SIGNING_SECRET env variable");
 		return new Response("Missing webhook secret", { status: 500 });
 	}
 
