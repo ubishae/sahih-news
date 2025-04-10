@@ -9,83 +9,58 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Bookmark, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { api } from "@/trpc/react";
+import { Bookmark, Loader2, Search } from "lucide-react";
 import { useState } from "react";
+
+// Define types for filter and sort options
+type FilterOption = "all" | "true" | "false" | "unverified" | "misleading";
+type SortOption = "recent" | "oldest" | "credibility";
 
 interface UserBookmarksProps {
 	username: string;
 }
 
 export default function UserBookmarks({ username }: UserBookmarksProps) {
-	const [filter, setFilter] = useState("all");
+	const [filter, setFilter] = useState<FilterOption>("all");
 	const [searchQuery, setSearchQuery] = useState("");
+	const [sortBy, setSortBy] = useState<SortOption>("recent");
+	const [cursor, setCursor] = useState<number | undefined>(undefined);
+	
+	// Fetch bookmarks from API
+	const { data, isLoading, isFetching, fetchNextPage, hasNextPage } = 
+		api.bookmarks.getBookmarks.useInfiniteQuery(
+			{
+				limit: 10,
+				collection: "all",
+				sortBy,
+			},
+			{
+				getNextPageParam: (lastPage) => lastPage.nextCursor,
+			}
+		);
 
-	// Mock bookmarks data - in a real app, this would come from an API
-	const bookmarks = [
-		{
-			id: 1,
-			user: {
-				name: "Global Affairs",
-				handle: "@globalaffairs",
-				avatar: "/placeholder.svg?height=40&width=40",
-				isVerified: true,
-				credibilityScore: 94,
-			},
-			content:
-				"BREAKING: International summit on climate change reaches historic agreement. All major economies commit to 50% emissions reduction by 2035.",
-			timestamp: "Saved 2 days ago",
-			credibilityTag: "true",
-			reviewCount: 342,
-			commentCount: 128,
-			sources: ["https://example.com/climate-summit"],
-			hasMedia: true,
-		},
-		{
-			id: 2,
-			user: {
-				name: "Science Today",
-				handle: "@sciencetoday",
-				avatar: "/placeholder.svg?height=40&width=40",
-				isVerified: true,
-				credibilityScore: 91,
-			},
-			content:
-				"Scientists discover potential breakthrough in renewable energy storage. New material could store solar energy for months without degradation.",
-			timestamp: "Saved 1 week ago",
-			credibilityTag: "unverified",
-			reviewCount: 187,
-			commentCount: 76,
-			sources: ["https://example.com/energy-breakthrough"],
-		},
-		{
-			id: 3,
-			user: {
-				name: "Health Insights",
-				handle: "@healthinsights",
-				avatar: "/placeholder.svg?height=40&width=40",
-				isVerified: false,
-				credibilityScore: 72,
-			},
-			content:
-				"New diet claims to reverse aging process and extend lifespan by up to 20 years. Experts remain skeptical about extraordinary claims.",
-			timestamp: "Saved 2 weeks ago",
-			credibilityTag: "misleading",
-			reviewCount: 231,
-			commentCount: 98,
-			sources: ["https://example.com/diet-claims"],
-		},
-	];
-
-	// Filter bookmarks based on credibility status
+	// Flatten the pages of bookmarks
+	const bookmarks = data?.pages.flatMap((page) => page.items) || [];
+	
+	// Filter bookmarks based on credibility status and search query
 	const filteredBookmarks = bookmarks
 		.filter((bookmark) => {
 			if (filter === "all") return true;
-			return bookmark.credibilityTag === filter;
+			return bookmark.consensusTag === filter;
 		})
 		.filter((bookmark) => {
 			if (!searchQuery) return true;
 			return bookmark.content.toLowerCase().includes(searchQuery.toLowerCase());
 		});
+
+	// Handle load more
+	const handleLoadMore = () => {
+		if (hasNextPage && !isFetching) {
+			void fetchNextPage();
+		}
+	};
 
 	return (
 		<div className="space-y-6">
@@ -99,7 +74,7 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 						onChange={(e) => setSearchQuery(e.target.value)}
 					/>
 				</div>
-				<Select value={filter} onValueChange={setFilter}>
+				<Select value={filter} onValueChange={(value: FilterOption) => setFilter(value)}>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Filter by status" />
 					</SelectTrigger>
@@ -111,25 +86,63 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 						<SelectItem value="false">False</SelectItem>
 					</SelectContent>
 				</Select>
+				<Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+					<SelectTrigger className="w-[180px]">
+						<SelectValue placeholder="Sort by" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="recent">Most Recent</SelectItem>
+						<SelectItem value="oldest">Oldest First</SelectItem>
+						<SelectItem value="credibility">Credibility</SelectItem>
+					</SelectContent>
+				</Select>
 			</div>
 
-			{filteredBookmarks.length > 0 ? (
-				<div className="space-y-4">
-					{filteredBookmarks.map((bookmark) => (
-						<NewsPost
-							id={bookmark.id}
-							key={bookmark.id}
-							user={bookmark.user}
-							content={bookmark.content}
-							timestamp={bookmark.timestamp}
-							credibilityTag={bookmark.credibilityTag}
-							reviewCount={bookmark.reviewCount}
-							commentCount={bookmark.commentCount}
-							sources={bookmark.sources}
-							hasMedia={bookmark.hasMedia}
-						/>
-					))}
+			{isLoading ? (
+				<div className="py-12 text-center text-muted-foreground">
+					<div className="mb-4 flex justify-center">
+						<Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+					</div>
+					<p>Loading bookmarks...</p>
 				</div>
+			) : filteredBookmarks.length > 0 ? (
+				<>
+					<div className="space-y-4">
+						{filteredBookmarks.map((bookmark) => (
+							<NewsPost
+								id={bookmark.postId}
+								key={bookmark.id}
+								user={bookmark.user}
+								content={bookmark.content}
+								timestamp={`Saved ${new Date(bookmark.bookmarkedAt).toLocaleDateString()}`}
+								credibilityTag={bookmark.consensusTag}
+								reviewCount={bookmark.reviewCount}
+								commentCount={bookmark.commentCount}
+								sources={bookmark.sources}
+								hasMedia={bookmark.hasMedia}
+							/>
+						))}
+					</div>
+					
+					{hasNextPage && (
+						<div className="mt-6 flex justify-center">
+							<Button 
+								variant="outline" 
+								onClick={handleLoadMore}
+								disabled={isFetching}
+							>
+								{isFetching ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										Loading...
+									</>
+								) : (
+									"Load More"
+								)}
+							</Button>
+						</div>
+					)}
+				</>
 			) : (
 				<div className="py-12 text-center text-muted-foreground">
 					<div className="mb-4 flex justify-center">
