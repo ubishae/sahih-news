@@ -46,6 +46,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { Progress } from "@/components/ui/progress";
+import { api } from "@/trpc/react";
 
 // Available categories for news posts
 const CATEGORIES = [
@@ -66,6 +67,7 @@ const CATEGORIES = [
 export default function PostNewsPage() {
 	const router = useRouter();
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const { mutate: createPost } = api.post.create.useMutation();
 	const form = useForm({
 		defaultValues: {
 			content: "",
@@ -78,6 +80,15 @@ export default function PostNewsPage() {
 		},
 		onSubmit: ({ value }) => {
 			console.log(value);
+			createPost({
+				content: value.content,
+				// sources: value.sources,
+				// tags: value.tags,
+				// categories: value.categories,
+				// location: value.location,
+				// mediaFiles: value.mediaFiles,
+				// aiAssistance: value.aiAssistance,
+			});
 		},
 	});
 
