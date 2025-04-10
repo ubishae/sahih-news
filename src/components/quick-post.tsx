@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { Progress } from "./ui/progress";
 
 interface QuickPostProps {
 	buttonVariant?:
@@ -318,10 +319,7 @@ export default function QuickPost({
 									className="min-h-[120px] resize-none"
 								/>
 								<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-									<div
-										className={`h-full ${characterPercentage >= 90 ? "bg-red-500" : characterPercentage >= 70 ? "bg-yellow-500" : "bg-green-500"}`}
-										style={{ width: `${characterPercentage}%` }}
-									/>
+									<Progress value={characterPercentage} />
 								</div>
 							</div>
 
