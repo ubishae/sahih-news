@@ -11,6 +11,9 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
+			"correctness": {
+				"noChildrenProp": "off"
+			},
 			"a11y": {
 				"noSvgWithoutTitle": "off"
 			},

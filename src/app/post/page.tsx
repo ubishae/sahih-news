@@ -44,7 +44,8 @@ import {
 	X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
+import { useForm } from "@tanstack/react-form";
 
 // Available categories for news posts
 const CATEGORIES = [
@@ -65,6 +66,19 @@ const CATEGORIES = [
 export default function PostNewsPage() {
 	const router = useRouter();
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const form = useForm({
+		defaultValues: {
+			content: "",
+			sources: [{ url: "", title: "" }],
+			tags: [{ name: "" }],
+			location: "",
+			mediaFiles: [{ type: "", file: null, preview: "" }],
+			aiAssistance: true,
+		},
+		onSubmit: ({ value }) => {
+			console.log(value);
+		},
+	});
 
 	// Form state
 	const [content, setContent] = useState("");
@@ -152,7 +166,7 @@ export default function PostNewsPage() {
 		// Revoke the object URL to avoid memory leaks
 		if (
 			newMedia[index]?.preview &&
-			typeof newMedia[index].preview === 'string' &&
+			typeof newMedia[index].preview === "string" &&
 			newMedia[index].preview.startsWith("blob:")
 		) {
 			URL.revokeObjectURL(newMedia[index].preview);
@@ -160,25 +174,6 @@ export default function PostNewsPage() {
 
 		newMedia.splice(index, 1);
 		setMedia(newMedia);
-	};
-
-	// Submit the news post
-	const submitPost = async () => {
-		if (!content.trim()) return;
-
-		setIsSubmitting(true);
-
-		try {
-			// In a real app, this would be an API call to submit the post
-			// For now, we'll simulate a delay and then redirect
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-
-			// Redirect to the home page after successful submission
-			router.push("/");
-		} catch (error) {
-			console.error("Error submitting post:", error);
-			setIsSubmitting(false);
-		}
 	};
 
 	// Check if the form is valid for submission
@@ -200,7 +195,14 @@ export default function PostNewsPage() {
 	return (
 		<div className="min-h-screen bg-background">
 			<Header />
-			<main className="container mx-auto max-w-4xl px-4 py-6">
+			<form
+				className="container mx-auto max-w-4xl px-4 py-6"
+				onSubmit={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					form.handleSubmit();
+				}}
+			>
 				<h1 className="mb-6 font-bold text-2xl">Post News</h1>
 
 				<Tabs defaultValue="compose" className="w-full">
@@ -221,35 +223,33 @@ export default function PostNewsPage() {
 								<CardTitle className="text-lg">News Content</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-4">
-								<div className="space-y-2">
-									<div className="flex justify-between">
-										<Label htmlFor="content">
-											Content (max {CHARACTER_LIMIT} characters)
-										</Label>
-										<span
-											className={`text-sm ${content.length >= CHARACTER_LIMIT * 0.9 ? "text-red-500" : "text-muted-foreground"}`}
-										>
-											{content.length}/{CHARACTER_LIMIT}
-										</span>
-									</div>
-									{/* <Textarea
-                    id="content"
-                    placeholder="Share news, facts, or updates..."
-                    value={content}
-                    onChange={handleContentChange}
-                    className="min-h-[150px] resize-none"
-                  /> */}
-									<RichTextEditor
-										value={content}
-										onChange={handleContentChange}
-									/>
-									<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-										<div
-											className={`h-full ${characterPercentage >= 90 ? "bg-red-500" : characterPercentage >= 70 ? "bg-yellow-500" : "bg-green-500"}`}
-											style={{ width: `${characterPercentage}%` }}
-										/>
-									</div>
-								</div>
+								<form.Field
+									name="content"
+									children={(field) => (
+										<div className="space-y-2">
+											<div className="flex justify-between">
+												<Label htmlFor="content">
+													Content (max {CHARACTER_LIMIT} characters)
+												</Label>
+												<span
+													className={`text-sm ${field.state.value.length >= CHARACTER_LIMIT * 0.9 ? "text-red-500" : "text-muted-foreground"}`}
+												>
+													{field.state.value.length}/{CHARACTER_LIMIT}
+												</span>
+											</div>
+											<RichTextEditor
+												value={field.state.value}
+												onChange={(e) => field.handleChange(e)}
+											/>
+											<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+												<div
+													className={`h-full ${characterPercentage >= 90 ? "bg-red-500" : characterPercentage >= 70 ? "bg-yellow-500" : "bg-green-500"}`}
+													style={{ width: `${characterPercentage}%` }}
+												/>
+											</div>
+										</div>
+									)}
+								/>
 
 								<div className="flex items-center space-x-2">
 									<Switch
@@ -285,70 +285,60 @@ export default function PostNewsPage() {
 								</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-4">
-								<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-									<div>
-										<Label htmlFor="source-url">Source URL</Label>
-										<Input
-											id="source-url"
-											placeholder="https://example.com/article"
-											value={newSourceUrl}
-											onChange={(e) => setNewSourceUrl(e.target.value)}
-										/>
-									</div>
-									<div>
-										<Label htmlFor="source-title">Source Title</Label>
-										<div className="flex gap-2">
-											<Input
-												id="source-title"
-												placeholder="Article or source name"
-												value={newSourceTitle}
-												onChange={(e) => setNewSourceTitle(e.target.value)}
-											/>
-											<Button
-												type="button"
-												onClick={addSource}
-												disabled={
-													!newSourceUrl.trim() || !newSourceTitle.trim()
-												}
-											>
-												<Plus className="h-4 w-4" />
-											</Button>
+								<form.Field name="sources" mode="array">
+									{(field) => (
+										<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+											{field.state.value.map((_, i) => (
+												<Fragment key={i}>
+													<form.Field
+														name={`sources[${i}].url`}
+														children={(subField) => (
+															<div>
+																<Label htmlFor="source-url">Source URL</Label>
+																<Input
+																	id="source-url"
+																	placeholder="https://example.com/article"
+																	value={subField.state.value}
+																	onChange={(e) =>
+																		subField.handleChange(e.target.value)
+																	}
+																/>
+															</div>
+														)}
+													/>
+													<form.Field
+														name={`sources[${i}].title`}
+														children={(subField) => (
+															<div>
+																<Label htmlFor="source-title">
+																	Source Title
+																</Label>
+																<div className="flex gap-2">
+																	<Input
+																		id="source-title"
+																		placeholder="Article or source name"
+																		value={subField.state.value}
+																		onChange={(e) =>
+																			subField.handleChange(e.target.value)
+																		}
+																	/>
+																	<Button
+																		type="button"
+																		onClick={() =>
+																			field.pushValue({ url: "", title: "" })
+																		}
+																	>
+																		<Plus className="h-4 w-4" />
+																	</Button>
+																</div>
+															</div>
+														)}
+													/>
+												</Fragment>
+											))}
 										</div>
-									</div>
-								</div>
-
-								{sources.length > 0 && (
-									<div className="mt-4 space-y-2">
-										<Label>Added Sources</Label>
-										<ScrollArea className="h-[100px] rounded-md border p-2">
-											<div className="space-y-2">
-												{sources.map((source, index) => (
-													<div
-														key={index}
-														className="flex items-center justify-between rounded-md bg-muted p-2"
-													>
-														<div className="flex-1 truncate">
-															<div className="truncate font-medium text-sm">
-																{source.title}
-															</div>
-															<div className="truncate text-muted-foreground text-xs">
-																{source.url}
-															</div>
-														</div>
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-6 w-6"
-															onClick={() => removeSource(index)}
-														>
-															<X className="h-3 w-3" />
-														</Button>
-													</div>
-												))}
-											</div>
-										</ScrollArea>
-									</div>
-								)}
+									)}
+								</form.Field>
 
 								<Alert className="bg-muted/50">
 									<Info className="h-4 w-4" />
@@ -392,47 +382,73 @@ export default function PostNewsPage() {
 								</div>
 
 								<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-									<div>
-										<Label htmlFor="custom-tag">Custom Tag</Label>
-										<div className="flex gap-2">
-											<Input
-												id="custom-tag"
-												placeholder="Add a custom tag"
-												value={customTag}
-												onChange={(e) => setCustomTag(e.target.value)}
-												maxLength={20}
-											/>
-											<Button
-												type="button"
-												onClick={addCustomTag}
-												disabled={!customTag.trim() || selectedTags.length >= 5}
-											>
-												<Plus className="h-4 w-4" />
-											</Button>
-										</div>
-									</div>
+									<form.Field name="tags" mode="array">
+										{(field) => (
+											<div>
+												{field.state.value.map((_, i) => (
+													<Fragment key={i}>
+														<form.Field
+															name={`tags[${i}].name`}
+															children={(subField) => (
+																<Fragment>
+																	<Label htmlFor="custom-tag">Custom Tag</Label>
+																	<div className="flex gap-2">
+																		<Input
+																			id="custom-tag"
+																			placeholder="Add a custom tag"
+																			value={subField.state.value}
+																			onChange={(e) =>
+																				subField.handleChange(e.target.value)
+																			}
+																			maxLength={20}
+																		/>
+																		<Button
+																			type="button"
+																			onClick={() =>
+																				field.pushValue({ name: "" })
+																			}
+																		>
+																			<Plus className="h-4 w-4" />
+																		</Button>
+																	</div>
+																</Fragment>
+															)}
+														/>
+													</Fragment>
+												))}
+											</div>
+										)}
+									</form.Field>
 
-									<div>
-										<Label htmlFor="location">Location (optional)</Label>
-										<Select value={locationTag} onValueChange={setLocationTag}>
-											<SelectTrigger id="location">
-												<SelectValue placeholder="Select location" />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="global">Global</SelectItem>
-												<SelectItem value="north-america">
-													North America
-												</SelectItem>
-												<SelectItem value="europe">Europe</SelectItem>
-												<SelectItem value="asia">Asia</SelectItem>
-												<SelectItem value="africa">Africa</SelectItem>
-												<SelectItem value="south-america">
-													South America
-												</SelectItem>
-												<SelectItem value="australia">Australia</SelectItem>
-											</SelectContent>
-										</Select>
-									</div>
+									<form.Field
+										name="location"
+										children={(field) => (
+											<div>
+												<Label htmlFor="location">Location (optional)</Label>
+												<Select
+													value={field.state.value}
+													onValueChange={(e) => field.handleChange(e)}
+												>
+													<SelectTrigger id="location" className="w-full">
+														<SelectValue placeholder="Select location" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="global">Global</SelectItem>
+														<SelectItem value="north-america">
+															North America
+														</SelectItem>
+														<SelectItem value="europe">Europe</SelectItem>
+														<SelectItem value="asia">Asia</SelectItem>
+														<SelectItem value="africa">Africa</SelectItem>
+														<SelectItem value="south-america">
+															South America
+														</SelectItem>
+														<SelectItem value="australia">Australia</SelectItem>
+													</SelectContent>
+												</Select>
+											</div>
+										)}
+									/>
 								</div>
 
 								{selectedTags.length > 0 && (
@@ -508,7 +524,7 @@ export default function PostNewsPage() {
 									</TooltipProvider>
 								</div>
 
-								<input
+								<Input
 									type="file"
 									ref={fileInputRef}
 									className="hidden"
@@ -560,6 +576,7 @@ export default function PostNewsPage() {
 							<CardContent>
 								{content ? (
 									<NewsPost
+										id={0}
 										user={currentUser}
 										content={content}
 										timestamp="Just now"
@@ -675,30 +692,35 @@ export default function PostNewsPage() {
 					</TabsContent>
 				</Tabs>
 
-				<div className="mt-8 flex items-center justify-between">
-					<Button variant="outline" onClick={() => router.push("/")}>
-						Cancel
-					</Button>
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							onClick={() => {
-								// Save as draft functionality would go here
-								router.push("/");
-							}}
-						>
-							Save as Draft
-						</Button>
-						<Button
-							onClick={submitPost}
-							disabled={!isFormValid || isSubmitting}
-							className="min-w-[100px]"
-						>
-							{isSubmitting ? "Posting..." : "Post News"}
-						</Button>
-					</div>
-				</div>
-			</main>
+				<form.Subscribe
+					selector={(state) => [state.canSubmit, state.isSubmitting]}
+					children={([canSubmit, isSubmitting]) => (
+						<div className="mt-8 flex items-center justify-between">
+							<Button variant="outline" onClick={() => router.push("/")}>
+								Cancel
+							</Button>
+							<div className="flex items-center gap-2">
+								<Button
+									variant="outline"
+									onClick={() => {
+										// Save as draft functionality would go here
+										router.push("/");
+									}}
+								>
+									Save as Draft
+								</Button>
+								<Button
+									type="submit"
+									disabled={!canSubmit || isSubmitting}
+									className="min-w-[100px]"
+								>
+									{isSubmitting ? "Posting..." : "Post News"}
+								</Button>
+							</div>
+						</div>
+					)}
+				/>
+			</form>
 		</div>
 	);
 }
