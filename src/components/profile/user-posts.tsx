@@ -23,7 +23,7 @@ export default function UserPosts({ username }: UserPostsProps) {
 	// Mock posts data - in a real app, this would come from an API
 	const posts = [
 		{
-			id: "1",
+			id: 1,
 			user: {
 				name: "Alex Johnson",
 				handle: "@alexj",
@@ -40,7 +40,7 @@ export default function UserPosts({ username }: UserPostsProps) {
 			sources: ["https://example.com/renewable-energy-study"],
 		},
 		{
-			id: "2",
+			id: 2,
 			user: {
 				name: "Alex Johnson",
 				handle: "@alexj",
@@ -58,7 +58,7 @@ export default function UserPosts({ username }: UserPostsProps) {
 			hasMedia: true,
 		},
 		{
-			id: "3",
+			id: 3,
 			user: {
 				name: "Alex Johnson",
 				handle: "@alexj",
@@ -117,11 +117,12 @@ export default function UserPosts({ username }: UserPostsProps) {
 				<div className="space-y-4">
 					{filteredPosts.map((post) => (
 						<NewsPost
+							id={post.id}
 							key={post.id}
 							user={post.user}
 							content={post.content}
 							timestamp={post.timestamp}
-							credibilityTag={post.credibilityTag as any}
+							credibilityTag={post.credibilityTag}
 							reviewCount={post.reviewCount}
 							commentCount={post.commentCount}
 							sources={post.sources}

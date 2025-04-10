@@ -278,6 +278,7 @@ export default function ExplorePage() {
 
 							<TabsContent value="trending" className="mt-4 space-y-4">
 								<NewsPost
+									id={1}
 									user={{
 										name: "Global Affairs",
 										handle: "@globalaffairs",
@@ -295,6 +296,7 @@ export default function ExplorePage() {
 								/>
 
 								<NewsPost
+									id={2}
 									user={{
 										name: "Science Today",
 										handle: "@sciencetoday",
@@ -311,6 +313,7 @@ export default function ExplorePage() {
 								/>
 
 								<NewsPost
+									id={3}
 									user={{
 										name: "Market Watch",
 										handle: "@marketwatch",
@@ -327,6 +330,7 @@ export default function ExplorePage() {
 								/>
 
 								<NewsPost
+									id={4}
 									user={{
 										name: "Health Insights",
 										handle: "@healthinsights",
@@ -345,6 +349,7 @@ export default function ExplorePage() {
 
 							<TabsContent value="latest" className="mt-4 space-y-4">
 								<NewsPost
+									id={5}
 									user={{
 										name: "Tech Insider",
 										handle: "@techinsider",
@@ -361,6 +366,7 @@ export default function ExplorePage() {
 								/>
 
 								<NewsPost
+									id={6}
 									user={{
 										name: "Education News",
 										handle: "@educationnews",
@@ -377,6 +383,7 @@ export default function ExplorePage() {
 								/>
 
 								<NewsPost
+									id={7}
 									user={{
 										name: "Sports Central",
 										handle: "@sportscentral",
@@ -415,6 +422,7 @@ export default function ExplorePage() {
 								</div>
 
 								<NewsPost
+									id={8}
 									user={{
 										name: "Science Journal",
 										handle: "@sciencejournal",
@@ -431,6 +439,7 @@ export default function ExplorePage() {
 								/>
 
 								<NewsPost
+									id={9}
 									user={{
 										name: "Policy Watch",
 										handle: "@policywatch",
@@ -447,6 +456,7 @@ export default function ExplorePage() {
 								/>
 
 								<NewsPost
+									id={10}
 									user={{
 										name: "Environmental Report",
 										handle: "@envreport",

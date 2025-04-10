@@ -53,7 +53,9 @@ import { api } from "@/trpc/react";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 
-interface User {
+export type CredibilityTag = "true" | "false" | "unverified" | "misleading";
+
+export interface User {
 	name: string;
 	handle: string;
 	avatar: string;
@@ -66,7 +68,7 @@ interface NewsPostProps {
 	user: User;
 	content: string;
 	timestamp: string;
-	credibilityTag: "true" | "false" | "unverified" | "misleading";
+	credibilityTag: string;
 	reviewCount: number;
 	commentCount: number;
 	sources: string[];

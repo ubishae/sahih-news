@@ -23,7 +23,7 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 	// Mock bookmarks data - in a real app, this would come from an API
 	const bookmarks = [
 		{
-			id: "1",
+			id: 1,
 			user: {
 				name: "Global Affairs",
 				handle: "@globalaffairs",
@@ -41,7 +41,7 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 			hasMedia: true,
 		},
 		{
-			id: "2",
+			id: 2,
 			user: {
 				name: "Science Today",
 				handle: "@sciencetoday",
@@ -58,7 +58,7 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 			sources: ["https://example.com/energy-breakthrough"],
 		},
 		{
-			id: "3",
+			id: 3,
 			user: {
 				name: "Health Insights",
 				handle: "@healthinsights",
@@ -117,11 +117,12 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 				<div className="space-y-4">
 					{filteredBookmarks.map((bookmark) => (
 						<NewsPost
+							id={bookmark.id}
 							key={bookmark.id}
 							user={bookmark.user}
 							content={bookmark.content}
 							timestamp={bookmark.timestamp}
-							credibilityTag={bookmark.credibilityTag as any}
+							credibilityTag={bookmark.credibilityTag}
 							reviewCount={bookmark.reviewCount}
 							commentCount={bookmark.commentCount}
 							sources={bookmark.sources}
