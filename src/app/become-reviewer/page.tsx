@@ -170,7 +170,7 @@ export default function BecomeReviewerPage() {
 										<Progress
 											value={userData.progress.credibilityScore}
 											max={100}
-											className={`h-2 ${meetsCredibilityRequirement ? "bg-green-100" : "bg-yellow-100"} [&>div]:${meetsCredibilityRequirement ? "bg-green-500" : "bg-yellow-500"}`}
+											className={`h-2 ${meetsCredibilityRequirement ? "bg-green-100" : "bg-yellow-100"}[&>div]:${meetsCredibilityRequirement ? "bg-green-500" : "bg-yellow-500"}`}
 										/>
 									</div>
 
@@ -198,7 +198,7 @@ export default function BecomeReviewerPage() {
 										<Progress
 											value={userData.progress.reviewAccuracy}
 											max={100}
-											className={`h-2 ${meetsAccuracyRequirement ? "bg-green-100" : "bg-yellow-100"} [&>div]:${meetsAccuracyRequirement ? "bg-green-500" : "bg-yellow-500"}`}
+											className={`h-2 ${meetsAccuracyRequirement ? "bg-green-100" : "bg-yellow-100"}[&>div]:${meetsAccuracyRequirement ? "bg-green-500" : "bg-yellow-500"}`}
 										/>
 									</div>
 
@@ -231,7 +231,7 @@ export default function BecomeReviewerPage() {
 												100,
 											)}
 											max={100}
-											className={`h-2 ${meetsPostCountRequirement ? "bg-green-100" : "bg-yellow-100"} [&>div]:${meetsPostCountRequirement ? "bg-green-500" : "bg-yellow-500"}`}
+											className={`h-2 ${meetsPostCountRequirement ? "bg-green-100" : "bg-yellow-100"}[&>div]:${meetsPostCountRequirement ? "bg-green-500" : "bg-yellow-500"}`}
 										/>
 									</div>
 
@@ -264,7 +264,7 @@ export default function BecomeReviewerPage() {
 												100,
 											)}
 											max={100}
-											className={`h-2 ${meetsAccountAgeRequirement ? "bg-green-100" : "bg-yellow-100"} [&>div]:${meetsAccountAgeRequirement ? "bg-green-500" : "bg-yellow-500"}`}
+											className={`h-2 ${meetsAccountAgeRequirement ? "bg-green-100" : "bg-yellow-100"}[&>div]:${meetsAccountAgeRequirement ? "bg-green-500" : "bg-yellow-500"}`}
 										/>
 									</div>
 								</div>

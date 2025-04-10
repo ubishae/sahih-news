@@ -45,6 +45,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
+import { Progress } from "@/components/ui/progress";
 
 // Available categories for news posts
 const CATEGORIES = [
@@ -85,7 +86,6 @@ export default function PostNewsPage() {
 	const [media, setMedia] = useState<
 		{ type: string; file: File | null; preview: string }[]
 	>([]);
-	const [aiAssistance, setAiAssistance] = useState(true);
 
 	// Character limit from PRD
 	const CHARACTER_LIMIT = 500;
@@ -105,15 +105,17 @@ export default function PostNewsPage() {
 		if (!files || files.length === 0) return;
 
 		const file = files[0];
-		const fileType = file!.type.startsWith("image/") ? "image" : "document";
+		const fileType = file?.type.startsWith("image/") ? "image" : "document";
+
+		if (!file) return;
 
 		// Create a preview URL for images
 		const preview =
 			fileType === "image"
-				? URL.createObjectURL(file!)
+				? URL.createObjectURL(file)
 				: "/placeholder.svg?height=100&width=100&text=Document";
 
-		setMedia([...media, { type: fileType, file: file!, preview }]);
+		setMedia([...media, { type: fileType, file: file, preview }]);
 
 		// Reset the file input
 		if (fileInputRef.current) {
@@ -203,11 +205,13 @@ export default function PostNewsPage() {
 											<form.Subscribe
 												children={(state) => (
 													<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-														<div
-															className={`h-full ${state.values.content.length >= CHARACTER_LIMIT * 0.9 ? "bg-red-500" : state.values.content.length >= CHARACTER_LIMIT * 0.7 ? "bg-yellow-500" : "bg-green-500"}`}
-															style={{
-																width: `${(state.values.content.length / CHARACTER_LIMIT) * 100}%`,
-															}}
+														<Progress
+															value={
+																(state.values.content.length /
+																	CHARACTER_LIMIT) *
+																100
+															}
+															className="w-full"
 														/>
 													</div>
 												)}
