@@ -27,9 +27,9 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sortBy, setSortBy] = useState<SortOption>("recent");
 	const [cursor, setCursor] = useState<number | undefined>(undefined);
-	
+
 	// Fetch bookmarks from API
-	const { data, isLoading, isFetching, fetchNextPage, hasNextPage } = 
+	const { data, isLoading, isFetching, fetchNextPage, hasNextPage } =
 		api.bookmarks.getBookmarks.useInfiniteQuery(
 			{
 				limit: 10,
@@ -38,12 +38,12 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 			},
 			{
 				getNextPageParam: (lastPage) => lastPage.nextCursor,
-			}
+			},
 		);
 
 	// Flatten the pages of bookmarks
 	const bookmarks = data?.pages.flatMap((page) => page.items) || [];
-	
+
 	// Filter bookmarks based on credibility status and search query
 	const filteredBookmarks = bookmarks
 		.filter((bookmark) => {
@@ -74,7 +74,10 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 						onChange={(e) => setSearchQuery(e.target.value)}
 					/>
 				</div>
-				<Select value={filter} onValueChange={(value: FilterOption) => setFilter(value)}>
+				<Select
+					value={filter}
+					onValueChange={(value: FilterOption) => setFilter(value)}
+				>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Filter by status" />
 					</SelectTrigger>
@@ -86,7 +89,10 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 						<SelectItem value="false">False</SelectItem>
 					</SelectContent>
 				</Select>
-				<Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+				<Select
+					value={sortBy}
+					onValueChange={(value: SortOption) => setSortBy(value)}
+				>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Sort by" />
 					</SelectTrigger>
@@ -115,7 +121,7 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 								user={bookmark.user}
 								content={bookmark.content}
 								timestamp={`Saved ${new Date(bookmark.bookmarkedAt).toLocaleDateString()}`}
-								credibilityTag={bookmark.consensusTag}
+								credibilityTag={bookmark.consensusTag || "unverified"}
 								reviewCount={bookmark.reviewCount}
 								commentCount={bookmark.commentCount}
 								sources={bookmark.sources}
@@ -123,11 +129,11 @@ export default function UserBookmarks({ username }: UserBookmarksProps) {
 							/>
 						))}
 					</div>
-					
+
 					{hasNextPage && (
 						<div className="mt-6 flex justify-center">
-							<Button 
-								variant="outline" 
+							<Button
+								variant="outline"
 								onClick={handleLoadMore}
 								disabled={isFetching}
 							>

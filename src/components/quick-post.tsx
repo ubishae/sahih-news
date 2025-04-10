@@ -118,13 +118,15 @@ export default function QuickPost({
 		const file = files[0];
 		const fileType = file?.type.startsWith("image/") ? "image" : "document";
 
+		if (!file) return;
+
 		// Create a preview URL for images
 		const preview =
 			fileType === "image"
-				? URL.createObjectURL(file!)
+				? URL.createObjectURL(file)
 				: "/placeholder.svg?height=100&width=100&text=Document";
 
-		setMedia({ type: fileType, file: file!, preview });
+		setMedia({ type: fileType, file: file, preview });
 
 		// Reset the file input
 		if (fileInputRef.current) {
@@ -134,7 +136,7 @@ export default function QuickPost({
 
 	// Remove media
 	const removeMedia = () => {
-		if (media && media.preview && media.preview.startsWith("blob:")) {
+		if (media?.preview?.startsWith("blob:")) {
 			URL.revokeObjectURL(media.preview);
 		}
 		setMedia(null);
@@ -170,7 +172,7 @@ export default function QuickPost({
 		setSourceUrl("");
 		setSourceTitle("");
 		setSelectedTags([]);
-		if (media && media.preview && media.preview.startsWith("blob:")) {
+		if (media?.preview?.startsWith("blob:")) {
 			URL.revokeObjectURL(media.preview);
 		}
 		setMedia(null);
@@ -406,7 +408,7 @@ export default function QuickPost({
 											<span className="text-xs">Add Image</span>
 										</Button>
 									)}
-									<input
+									<Input
 										type="file"
 										ref={fileInputRef}
 										className="hidden"

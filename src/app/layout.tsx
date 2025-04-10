@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 	title: "SahihNews - Verified News Platform",
 	description:
 		"A social news-sharing platform that enables users to post real-time news and collaboratively verify credibility",
-	icons: [{ rel: "icon", url: "/favicon.ico" }],
+	icons: [{ rel: "icon", url: "/logo.png" }],
 };
 
 const geist = Geist({
