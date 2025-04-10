@@ -3,7 +3,18 @@ import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Bold, Italic, List, ListOrdered, Strikethrough } from "lucide-react";
+import {
+	Bold,
+	Italic,
+	List,
+	ListOrdered,
+	Strikethrough,
+	AlignLeft,
+	AlignCenter,
+	AlignRight,
+	AlignJustify,
+} from "lucide-react";
+import Alignment from "@tiptap/extension-text-align";
 
 const RichTextEditor = ({
 	value,
@@ -31,6 +42,11 @@ const RichTextEditor = ({
 						class: "list-disc pl-4",
 					},
 				},
+			}),
+			Alignment.configure({
+				types: ["paragraph", "heading"],
+				alignments: ["left", "center", "right", "justify"],
+				defaultAlignment: "left",
 			}),
 		],
 		content: value, // Set the initial content with the provided value
@@ -85,6 +101,43 @@ const RichTextEditorToolbar = ({ editor }: { editor: Editor }) => {
 				onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
 			>
 				<ListOrdered className="h-4 w-4" />
+			</Toggle>
+			<Separator orientation="vertical" className="h-8 w-[1px]" />
+			<Toggle
+				size="sm"
+				pressed={editor.isActive({ textAlign: "left" })}
+				onPressedChange={() =>
+					editor.chain().focus().setTextAlign("left").run()
+				}
+			>
+				<AlignLeft className="h-4 w-4" />
+			</Toggle>
+			<Toggle
+				size="sm"
+				pressed={editor.isActive({ textAlign: "center" })}
+				onPressedChange={() =>
+					editor.chain().focus().setTextAlign("center").run()
+				}
+			>
+				<AlignCenter className="h-4 w-4" />
+			</Toggle>
+			<Toggle
+				size="sm"
+				pressed={editor.isActive({ textAlign: "right" })}
+				onPressedChange={() =>
+					editor.chain().focus().setTextAlign("right").run()
+				}
+			>
+				<AlignRight className="h-4 w-4" />
+			</Toggle>
+			<Toggle
+				size="sm"
+				pressed={editor.isActive({ textAlign: "justify" })}
+				onPressedChange={() =>
+					editor.chain().focus().setTextAlign("justify").run()
+				}
+			>
+				<AlignJustify className="h-4 w-4" />
 			</Toggle>
 		</div>
 	);
