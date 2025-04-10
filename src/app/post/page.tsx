@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/tooltip";
 import {
 	AlertCircle,
-	CheckCircle,
 	Eye,
 	FileText,
 	ImageIcon,
@@ -71,6 +70,7 @@ export default function PostNewsPage() {
 			content: "",
 			sources: [{ url: "", title: "" }],
 			tags: [{ name: "" }],
+			categories: [{ name: "" }],
 			location: "",
 			mediaFiles: [{ type: "", file: null, preview: "" }],
 			aiAssistance: true,
@@ -81,44 +81,14 @@ export default function PostNewsPage() {
 	});
 
 	// Form state
-	const [content, setContent] = useState("");
-	const [sources, setSources] = useState<{ url: string; title: string }[]>([]);
-	const [newSourceUrl, setNewSourceUrl] = useState("");
-	const [newSourceTitle, setNewSourceTitle] = useState("");
 	const [selectedTags, setSelectedTags] = useState<string[]>([]);
-	const [customTag, setCustomTag] = useState("");
 	const [media, setMedia] = useState<
 		{ type: string; file: File | null; preview: string }[]
 	>([]);
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [aiAssistance, setAiAssistance] = useState(true);
-	const [locationTag, setLocationTag] = useState("");
 
 	// Character limit from PRD
 	const CHARACTER_LIMIT = 500;
-
-	// Handle content change with character limit
-	const handleContentChange = (newContent: string) => {
-		if (newContent.length <= CHARACTER_LIMIT) {
-			setContent(newContent);
-		}
-	};
-
-	// Add a new source
-	const addSource = () => {
-		if (newSourceUrl.trim() && newSourceTitle.trim()) {
-			setSources([...sources, { url: newSourceUrl, title: newSourceTitle }]);
-			setNewSourceUrl("");
-			setNewSourceTitle("");
-		}
-	};
-
-	// Remove a source
-	const removeSource = (index: number) => {
-		const newSources = [...sources];
-		newSources.splice(index, 1);
-		setSources(newSources);
-	};
 
 	// Toggle a tag selection
 	const toggleTag = (tag: string) => {
@@ -126,14 +96,6 @@ export default function PostNewsPage() {
 			setSelectedTags(selectedTags.filter((t) => t !== tag));
 		} else {
 			setSelectedTags([...selectedTags, tag]);
-		}
-	};
-
-	// Add a custom tag
-	const addCustomTag = () => {
-		if (customTag.trim() && !selectedTags.includes(customTag)) {
-			setSelectedTags([...selectedTags, customTag]);
-			setCustomTag("");
 		}
 	};
 
@@ -176,12 +138,9 @@ export default function PostNewsPage() {
 		setMedia(newMedia);
 	};
 
-	// Check if the form is valid for submission
-	const isFormValid =
-		content.trim().length > 0 && content.length <= CHARACTER_LIMIT;
-
 	// Calculate the percentage of the character limit used
-	const characterPercentage = (content.length / CHARACTER_LIMIT) * 100;
+	const characterPercentage =
+		(form.state.values.content.length / CHARACTER_LIMIT) * 100;
 
 	// Sample user data for preview
 	const currentUser = {
@@ -241,30 +200,41 @@ export default function PostNewsPage() {
 												value={field.state.value}
 												onChange={(e) => field.handleChange(e)}
 											/>
-											<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-												<div
-													className={`h-full ${characterPercentage >= 90 ? "bg-red-500" : characterPercentage >= 70 ? "bg-yellow-500" : "bg-green-500"}`}
-													style={{ width: `${characterPercentage}%` }}
-												/>
-											</div>
+											<form.Subscribe
+												children={(state) => (
+													<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+														<div
+															className={`h-full ${state.values.content.length >= CHARACTER_LIMIT * 0.9 ? "bg-red-500" : state.values.content.length >= CHARACTER_LIMIT * 0.7 ? "bg-yellow-500" : "bg-green-500"}`}
+															style={{
+																width: `${(state.values.content.length / CHARACTER_LIMIT) * 100}%`,
+															}}
+														/>
+													</div>
+												)}
+											/>
 										</div>
 									)}
 								/>
 
-								<div className="flex items-center space-x-2">
-									<Switch
-										id="ai-assistance"
-										checked={aiAssistance}
-										onCheckedChange={setAiAssistance}
-									/>
-									<Label
-										htmlFor="ai-assistance"
-										className="flex items-center gap-1"
-									>
-										<Info className="h-4 w-4 text-blue-500" />
-										Use AI assistance to suggest fact-checks
-									</Label>
-								</div>
+								<form.Field
+									name="aiAssistance"
+									children={(field) => (
+										<div className="flex items-center space-x-2">
+											<Switch
+												id="ai-assistance"
+												checked={field.state.value}
+												onCheckedChange={(e) => field.handleChange(e)}
+											/>
+											<Label
+												htmlFor="ai-assistance"
+												className="flex items-center gap-1"
+											>
+												<Info className="h-4 w-4 text-blue-500" />
+												Use AI assistance to suggest fact-checks
+											</Label>
+										</div>
+									)}
+								/>
 
 								<Alert className="bg-muted/50">
 									<AlertCircle className="h-4 w-4" />
@@ -568,128 +538,140 @@ export default function PostNewsPage() {
 						</Card>
 					</TabsContent>
 
-					<TabsContent value="preview" className="space-y-6">
-						<Card>
-							<CardHeader>
-								<CardTitle className="text-lg">Post Preview</CardTitle>
-							</CardHeader>
-							<CardContent>
-								{content ? (
-									<NewsPost
-										id={0}
-										user={currentUser}
-										content={content}
-										timestamp="Just now"
-										credibilityTag="unverified"
-										reviewCount={0}
-										commentCount={0}
-										sources={sources.map((s) => s.url)}
-										hasMedia={media.some((m) => m.type === "image")}
-									/>
-								) : (
-									<div className="py-12 text-center text-muted-foreground">
-										<AlertCircle className="mx-auto mb-4 h-12 w-12" />
-										<h3 className="font-medium text-lg">Nothing to preview</h3>
-										<p>Add some content to see how your post will look.</p>
-									</div>
-								)}
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader>
-								<CardTitle className="text-lg">Credibility Check</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div className="flex items-center gap-3 rounded-md bg-muted p-4">
-									<div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
-										<AlertCircle className="h-5 w-5 text-yellow-600" />
-									</div>
-									<div>
-										<h3 className="font-medium">Initial Status: Unverified</h3>
-										<p className="text-muted-foreground text-sm">
-											All new posts start as unverified until reviewed by the
-											community and fact-checkers.
-										</p>
-									</div>
-								</div>
-
-								<div className="space-y-2">
-									<h3 className="font-medium">Credibility Factors</h3>
-									<div className="space-y-2">
-										<div className="flex items-center justify-between">
-											<div className="flex items-center gap-2">
-												<LinkIcon className="h-4 w-4 text-blue-500" />
-												<span>Sources provided</span>
+					<form.Subscribe
+						children={(state) => (
+							<TabsContent value="preview" className="space-y-6">
+								<Card>
+									<CardHeader>
+										<CardTitle className="text-lg">Post Preview</CardTitle>
+									</CardHeader>
+									<CardContent>
+										{state.values.content ? (
+											<NewsPost
+												id={0}
+												user={currentUser}
+												content={state.values.content}
+												timestamp="Just now"
+												credibilityTag="unverified"
+												reviewCount={0}
+												commentCount={0}
+												sources={state.values.sources.map((s) => s.url)}
+												hasMedia={media.some((m) => m.type === "image")}
+											/>
+										) : (
+											<div className="py-12 text-center text-muted-foreground">
+												<AlertCircle className="mx-auto mb-4 h-12 w-12" />
+												<h3 className="font-medium text-lg">
+													Nothing to preview
+												</h3>
+												<p>Add some content to see how your post will look.</p>
 											</div>
-											<Badge
-												variant={sources.length > 0 ? "outline" : "destructive"}
-												className={
-													sources.length > 0
-														? "bg-green-100 text-green-800"
-														: ""
-												}
-											>
-												{sources.length > 0
-													? `${sources.length} sources`
-													: "No sources"}
-											</Badge>
+										)}
+									</CardContent>
+								</Card>
+
+								<Card>
+									<CardHeader>
+										<CardTitle className="text-lg">Credibility Check</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-4">
+										<div className="flex items-center gap-3 rounded-md bg-muted p-4">
+											<div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
+												<AlertCircle className="h-5 w-5 text-yellow-600" />
+											</div>
+											<div>
+												<h3 className="font-medium">
+													Initial Status: Unverified
+												</h3>
+												<p className="text-muted-foreground text-sm">
+													All new posts start as unverified until reviewed by
+													the community and fact-checkers.
+												</p>
+											</div>
 										</div>
 
-										<div className="flex items-center justify-between">
-											<div className="flex items-center gap-2">
-												<TagIcon className="h-4 w-4 text-purple-500" />
-												<span>Categories tagged</span>
+										<div className="space-y-2">
+											<h3 className="font-medium">Credibility Factors</h3>
+											<div className="space-y-2">
+												<div className="flex items-center justify-between">
+													<div className="flex items-center gap-2">
+														<LinkIcon className="h-4 w-4 text-blue-500" />
+														<span>Sources provided</span>
+													</div>
+													<Badge
+														variant={
+															state.values.sources.length > 0
+																? "outline"
+																: "destructive"
+														}
+														className={
+															state.values.sources.length > 0
+																? "bg-green-100 text-green-800"
+																: ""
+														}
+													>
+														{state.values.sources.length > 0
+															? `${state.values.sources.length} sources`
+															: "No sources"}
+													</Badge>
+												</div>
+
+												<div className="flex items-center justify-between">
+													<div className="flex items-center gap-2">
+														<TagIcon className="h-4 w-4 text-purple-500" />
+														<span>Categories tagged</span>
+													</div>
+													<Badge
+														variant={
+															selectedTags.length > 0 ? "outline" : "secondary"
+														}
+														className={
+															selectedTags.length > 0
+																? "bg-green-100 text-green-800"
+																: ""
+														}
+													>
+														{selectedTags.length > 0
+															? `${selectedTags.length} tags`
+															: "No tags"}
+													</Badge>
+												</div>
+
+												<div className="flex items-center justify-between">
+													<div className="flex items-center gap-2">
+														<Avatar className="h-5 w-5">
+															<AvatarImage
+																src={currentUser.avatar}
+																alt={currentUser.name}
+															/>
+															<AvatarFallback>
+																{currentUser.name.charAt(0)}
+															</AvatarFallback>
+														</Avatar>
+														<span>Your credibility score</span>
+													</div>
+													<Badge
+														variant="outline"
+														className="bg-blue-100 text-blue-800"
+													>
+														{currentUser.credibilityScore}
+													</Badge>
+												</div>
 											</div>
-											<Badge
-												variant={
-													selectedTags.length > 0 ? "outline" : "secondary"
-												}
-												className={
-													selectedTags.length > 0
-														? "bg-green-100 text-green-800"
-														: ""
-												}
-											>
-												{selectedTags.length > 0
-													? `${selectedTags.length} tags`
-													: "No tags"}
-											</Badge>
 										</div>
 
-										<div className="flex items-center justify-between">
-											<div className="flex items-center gap-2">
-												<Avatar className="h-5 w-5">
-													<AvatarImage
-														src={currentUser.avatar}
-														alt={currentUser.name}
-													/>
-													<AvatarFallback>
-														{currentUser.name.charAt(0)}
-													</AvatarFallback>
-												</Avatar>
-												<span>Your credibility score</span>
-											</div>
-											<Badge
-												variant="outline"
-												className="bg-blue-100 text-blue-800"
-											>
-												{currentUser.credibilityScore}
-											</Badge>
-										</div>
-									</div>
-								</div>
-
-								<Alert className="bg-muted/50">
-									<Info className="h-4 w-4" />
-									<AlertDescription className="text-sm">
-										Adding credible sources increases the trustworthiness of
-										your post and helps others verify the information.
-									</AlertDescription>
-								</Alert>
-							</CardContent>
-						</Card>
-					</TabsContent>
+										<Alert className="bg-muted/50">
+											<Info className="h-4 w-4" />
+											<AlertDescription className="text-sm">
+												Adding credible sources increases the trustworthiness of
+												your post and helps others verify the information.
+											</AlertDescription>
+										</Alert>
+									</CardContent>
+								</Card>
+							</TabsContent>
+						)}
+					/>
 				</Tabs>
 
 				<form.Subscribe
