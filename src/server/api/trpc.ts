@@ -12,6 +12,7 @@ import { ZodError } from "zod";
 
 import { db } from "@/server/db";
 import { currentUser } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
 
 /**
  * 1. CONTEXT
@@ -106,13 +107,22 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
  * the session is active and guarantees `ctx.session.user` is not null.
  */
-const isAuthenticated = t.middleware(({ ctx, next }) => {
+const isAuthenticated = t.middleware(async ({ ctx, next }) => {
 	if (!ctx.user) {
 		throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 	}
 
+	const dbUser = await ctx.db.query.users.findFirst({
+		where: (user) => eq(user.clerkId, ctx.user?.id ?? ""),
+	});
+
+	if (!dbUser) {
+		throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
+	}
+
 	return next({
 		ctx: {
+			id: dbUser.id,
 			user: ctx.user,
 		},
 	});

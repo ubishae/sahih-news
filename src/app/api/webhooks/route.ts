@@ -106,7 +106,7 @@ export async function POST(req: Request) {
 		try {
 			// Create a new user in the database
 			await db.insert(users).values({
-				id: id, // Clerk user ID
+				clerkId: id,
 				username: username || `user_${id.substring(0, 8)}`, // Use username or generate one
 				displayName:
 					first_name && last_name
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
 			const existingUser = await db
 				.select()
 				.from(users)
-				.where(eq(users.id, id));
+				.where(eq(users.clerkId, id));
 
 			if (existingUser.length === 0) {
 				// User doesn't exist, create a new one
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
 				}
 
 				await db.insert(users).values({
-					id: id,
+					clerkId: id,
 					username: username || `user_${id.substring(0, 8)}`,
 					displayName:
 						first_name && last_name
@@ -171,7 +171,7 @@ export async function POST(req: Request) {
 						profileImageUrl: image_url || existingUser[0]?.profileImageUrl,
 						updatedAt: new Date(),
 					})
-					.where(eq(users.id, id));
+					.where(eq(users.clerkId, id));
 			}
 
 			return NextResponse.json(
@@ -195,7 +195,7 @@ export async function POST(req: Request) {
 			if (!id) {
 				return new Response("No user ID provided", { status: 400 });
 			}
-			await db.delete(users).where(eq(users.id, id));
+			await db.delete(users).where(eq(users.clerkId, id));
 
 			return NextResponse.json(
 				{ success: true, message: "User deleted" },

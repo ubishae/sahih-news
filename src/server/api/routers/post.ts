@@ -1,38 +1,52 @@
 import { z } from "zod";
-
-import {
-	createTRPCRouter,
-	protectedProcedure,
-	publicProcedure,
-} from "@/server/api/trpc";
-import { posts } from "@/server/db/schema";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { posts as postsTable } from "@/server/db/schema";
+import { desc, eq } from "drizzle-orm";
 
 export const postRouter = createTRPCRouter({
-	hello: publicProcedure
-		.input(z.object({ text: z.string() }))
-		.query(({ input }) => {
-			return {
-				greeting: `Hello ${input.text}`,
-			};
-		}),
-
-	create: protectedProcedure
-		.input(z.object({ content: z.string().min(1) }))
-		.mutation(async ({ ctx, input }) => {
-			const post = await ctx.db
-				.insert(posts)
-				.values({
-					content: input.content,
-					userId: ctx.user.id,
-				})
-				.returning();
-			return post[0];
-		}),
-	getLatest: publicProcedure.query(async ({ ctx }) => {
-		const post = await ctx.db.query.posts.findFirst({
-			orderBy: (posts, { desc }) => [desc(posts.createdAt)],
+	getAll: publicProcedure.query(async ({ ctx }) => {
+		const allPosts = await ctx.db.query.posts.findMany({
+			orderBy: desc(postsTable.createdAt),
+			with: {
+				bookmarks: true,
+				owner: true,
+			},
 		});
 
-		return post ?? null;
+		// If user is authenticated, check if each post is bookmarked by the current user
+		if (ctx.user) {
+			// First get the database user ID
+			const dbUser = await ctx.db.query.users.findFirst({
+				where: (user) => eq(user.clerkId, ctx.user?.id || ""),
+			});
+
+			if (dbUser) {
+				return allPosts.map((post) => ({
+					...post,
+					isBookmarked: post.bookmarks.some(
+						(bookmark) => bookmark.ownerId === dbUser.id,
+					),
+				}));
+			}
+		}
+
+		// If user is not authenticated or not found in DB, set isBookmarked to false for all posts
+		return allPosts.map((post) => ({
+			...post,
+			isBookmarked: false,
+		}));
 	}),
+
+	create: protectedProcedure
+		.input(z.object({ content: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			const post = await ctx.db
+				.insert(postsTable)
+				.values({
+					content: input.content,
+					ownerId: ctx.id,
+				})
+				.returning();
+			return post;
+		}),
 });
