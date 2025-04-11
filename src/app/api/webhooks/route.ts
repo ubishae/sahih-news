@@ -112,6 +112,21 @@ export async function POST(req: Request) {
 		}
 
 		try {
+			// Check if user already exists with this clerkId
+			const existingUser = await db
+				.select()
+				.from(users)
+				.where(eq(users.clerkId, id));
+
+			// If user already exists, return success without creating a duplicate
+			if (existingUser.length > 0) {
+				console.log(`User with clerkId ${id} already exists, skipping creation`);
+				return NextResponse.json(
+					{ success: true, message: "User already exists" },
+					{ status: 200 },
+				);
+			}
+			
 			// Generate a unique username
 			const uniqueUsername = generateUniqueUsername(username, id);
 			
