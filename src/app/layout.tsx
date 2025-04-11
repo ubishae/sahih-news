@@ -16,6 +16,7 @@ import {
 } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserDropdown } from "@/components/user-dropdown";
 
 export const metadata: Metadata = {
 	title: "SahihNews - Verified News Platform",
@@ -49,7 +50,7 @@ export default function RootLayout({
 									<SignUpButton />
 								</SignedOut>
 								<SignedIn>
-									<UserButton />
+									<UserDropdown />
 								</SignedIn>
 								<ThemeToggle />
 							</header>
