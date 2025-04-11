@@ -22,9 +22,11 @@ import {
 import Link from "next/link";
 import { useUser, SignOutButton, useAuth } from "@clerk/nextjs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/trpc/react";
 
 export function UserDropdown() {
 	const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+	const { data: currentUser } = api.user.me.useQuery();
 
 	// If clerk is not loaded or user data is loading, show loading state
 	if (!isClerkLoaded) {
@@ -36,7 +38,7 @@ export function UserDropdown() {
 	}
 
 	// If no user is logged in, return null or a sign-in button
-	if (!clerkUser) {
+	if (!clerkUser || !currentUser) {
 		return <Skeleton className="h-8 w-8 rounded-full" />;
 	}
 
@@ -57,7 +59,7 @@ export function UserDropdown() {
 				<Button variant="ghost" className="relative h-8 w-8 rounded-full">
 					<Avatar className="h-8 w-8">
 						<AvatarImage
-							src={clerkUser.imageUrl || ""}
+							src={clerkUser.imageUrl}
 							alt={clerkUser.fullName || ""}
 						/>
 						<AvatarFallback>{initials}</AvatarFallback>
@@ -71,7 +73,7 @@ export function UserDropdown() {
 							{clerkUser.fullName ?? ""}
 						</p>
 						<p className="text-muted-foreground text-xs leading-none">
-							@{clerkUser.username}
+							@{currentUser.username}
 						</p>
 					</div>
 				</DropdownMenuLabel>
