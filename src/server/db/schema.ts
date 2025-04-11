@@ -23,7 +23,7 @@ export const users = createTable(
 	{
 		id: serial("id").primaryKey(),
 		clerkId: varchar("clerk_id", { length: 255 }).notNull().unique(),
-		username: varchar("username", { length: 255 }).notNull(),
+		username: varchar("username", { length: 255 }).notNull().unique(),
 		displayName: varchar("display_name", { length: 255 }).notNull(),
 		profileImageUrl: text("profile_image_url").notNull(),
 		createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -31,5 +31,6 @@ export const users = createTable(
 	},
 	(table) => ({
 		clerkIdIdx: index("clerk_id_idx").on(table.clerkId),
+		usernameIdx: index("username_idx").on(table.username),
 	}),
 );
