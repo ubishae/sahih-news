@@ -51,9 +51,41 @@ export const posts = createTable("posts", {
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const postsRelations = relations(posts, ({ one }) => ({
+export const postsRelations = relations(posts, ({ one, many }) => ({
 	owner: one(users, {
 		fields: [posts.ownerId],
 		references: [users.id],
+	}),
+	bookmarks: many(bookmarks),
+}));
+
+export const bookmarks = createTable(
+	"bookmarks",
+	{
+		id: serial("id").primaryKey(),
+		ownerId: integer("owner_id")
+			.notNull()
+			.references(() => users.id),
+		postId: integer("post_id")
+			.notNull()
+			.references(() => posts.id),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	},
+	(table) => ({
+		uniqueIdx: index("unique_idx").on(table.ownerId, table.postId),
+		ownerIdIdx: index("owner_id_idx").on(table.ownerId),
+		postIdIdx: index("post_id_idx").on(table.postId),
+	}),
+);
+
+export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
+	owner: one(users, {
+		fields: [bookmarks.ownerId],
+		references: [users.id],
+	}),
+	post: one(posts, {
+		fields: [bookmarks.postId],
+		references: [posts.id],
 	}),
 }));
