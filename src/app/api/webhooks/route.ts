@@ -6,24 +6,25 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
 // Helper function to generate a unique username
-const generateUniqueUsername = (baseUsername: string | null, userId: string) => {
-  // Create a base username if none provided
-  const base = baseUsername || `user_${userId.substring(0, 8)}`;
-  // Add a timestamp suffix to ensure uniqueness
-  return `${base}_${Date.now().toString().substring(7)}`;
+const generateUniqueUsername = (
+	baseUsername: string | null,
+	userId: string,
+) => {
+	// Create a base username if none provided
+	const base = baseUsername || `user_${userId.substring(0, 8)}`;
+	// Add a timestamp suffix to ensure uniqueness
+	return `${base}_${Date.now().toString().substring(7)}`;
 };
 
 export async function POST(req: Request) {
 	// Get the webhook signing secret from the environment variables
+	// IMPORTANT: Make sure this matches the secret in your Clerk Dashboard
 	const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
 	if (!WEBHOOK_SECRET) {
 		console.error("Missing CLERK_WEBHOOK_SECRET env variable");
 		return new Response("Missing webhook secret", { status: 500 });
 	}
-
-	// Log the secret length for debugging (remove in production)
-	console.log("Webhook secret length:", WEBHOOK_SECRET.length);
 
 	// Get the headers directly from the request
 	const svix_id = req.headers.get("svix-id");
@@ -40,9 +41,6 @@ export async function POST(req: Request) {
 		return new Response("Missing svix headers", { status: 400 });
 	}
 
-	// Log the headers for debugging (remove in production)
-	console.log("Webhook headers:", { svix_id, svix_timestamp, svix_signature });
-
 	// Get the body as text first to avoid parsing it twice
 	const text = await req.text();
 
@@ -53,13 +51,6 @@ export async function POST(req: Request) {
 
 	// Verify the payload with the headers
 	try {
-		// Log more details about the verification attempt
-		console.log("Attempting to verify webhook with:");
-		console.log("- svix-id:", svix_id);
-		console.log("- svix-timestamp:", svix_timestamp);
-		console.log("- svix-signature length:", svix_signature?.length);
-		console.log("- payload length:", text.length);
-
 		// Try to verify the webhook
 		evt = wh.verify(text, {
 			"svix-id": svix_id,
@@ -68,27 +59,19 @@ export async function POST(req: Request) {
 		}) as WebhookEvent;
 	} catch (err) {
 		console.error("Error verifying webhook:", err);
-		console.error(`Webhook payload: ${text.substring(0, 200)}...`);
-		console.error(
-			`Webhook secret used: ${WEBHOOK_SECRET.substring(0, 3)}...${WEBHOOK_SECRET.substring(WEBHOOK_SECRET.length - 3)}`,
-		);
 
-		// For debugging purposes, let's try to parse the payload anyway
-		try {
-			const payload = JSON.parse(text);
-			console.log("Webhook event type (unverified):", payload.type);
-
-			// TEMPORARY WORKAROUND: Skip verification in development
-			// WARNING: Remove this in production!
-			if (process.env.NODE_ENV === "development") {
-				console.warn("⚠️ BYPASSING WEBHOOK VERIFICATION IN DEVELOPMENT MODE ⚠️");
-				evt = payload as WebhookEvent;
-			} else {
-				return new Response("Error verifying webhook", { status: 400 });
+		// For debugging purposes only
+		if (process.env.NODE_ENV === "development") {
+			console.warn("⚠️ BYPASSING WEBHOOK VERIFICATION IN DEVELOPMENT MODE ⚠️");
+			try {
+				evt = JSON.parse(text) as WebhookEvent;
+			} catch (parseError) {
+				console.error("Failed to parse webhook payload:", parseError);
+				return new Response("Error parsing webhook payload", { status: 400 });
 			}
-		} catch (parseError) {
-			console.error("Failed to parse webhook payload:", parseError);
-			return new Response("Error parsing webhook payload", { status: 400 });
+		} else {
+			// In production, always return error on verification failure
+			return new Response("Error verifying webhook", { status: 400 });
 		}
 	}
 
@@ -120,16 +103,18 @@ export async function POST(req: Request) {
 
 			// If user already exists, return success without creating a duplicate
 			if (existingUser.length > 0) {
-				console.log(`User with clerkId ${id} already exists, skipping creation`);
+				console.log(
+					`User with clerkId ${id} already exists, skipping creation`,
+				);
 				return NextResponse.json(
 					{ success: true, message: "User already exists" },
 					{ status: 200 },
 				);
 			}
-			
+
 			// Generate a unique username
 			const uniqueUsername = generateUniqueUsername(username, id);
-			
+
 			// Create a new user in the database
 			await db.insert(users).values({
 				clerkId: id,
@@ -190,12 +175,12 @@ export async function POST(req: Request) {
 			} else {
 				// For updates, only change the username if it's provided and different
 				let updatedUsername = existingUser[0]?.username;
-				
+
 				if (username && username !== existingUser[0]?.username) {
 					// If username is changing, ensure it's unique
 					updatedUsername = generateUniqueUsername(username, id);
 				}
-				
+
 				// Update existing user
 				await db
 					.update(users)
