@@ -18,7 +18,8 @@ import {
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `sahih-news_${name}`);
+// export const createTable = pgTableCreator((name) => `sahih-news_${name}`);
+export const createTable = pgTableCreator((name) => `${name}`);
 
 export const users = createTable(
 	"users",
@@ -31,15 +32,11 @@ export const users = createTable(
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
 	},
-	(table) => ({
-		clerkIdIdx: index("clerk_id_idx").on(table.clerkId),
-		usernameIdx: index("username_idx").on(table.username),
-	}),
+	(table) => [
+		index("clerk_id_idx").on(table.clerkId),
+		index("username_idx").on(table.username),
+	],
 );
-
-export const usersRelations = relations(users, ({ many }) => ({
-	posts: many(posts),
-}));
 
 export const posts = createTable("posts", {
 	id: serial("id").primaryKey(),
@@ -50,14 +47,6 @@ export const posts = createTable("posts", {
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
-
-export const postsRelations = relations(posts, ({ one, many }) => ({
-	owner: one(users, {
-		fields: [posts.ownerId],
-		references: [users.id],
-	}),
-	bookmarks: many(bookmarks),
-}));
 
 export const bookmarks = createTable(
 	"bookmarks",
@@ -72,12 +61,25 @@ export const bookmarks = createTable(
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
 	},
-	(table) => ({
-		uniqueIdx: index("unique_idx").on(table.ownerId, table.postId),
-		ownerIdIdx: index("owner_id_idx").on(table.ownerId),
-		postIdIdx: index("post_id_idx").on(table.postId),
-	}),
+	(table) => [
+		index("unique_idx").on(table.ownerId, table.postId),
+		index("owner_id_idx").on(table.ownerId),
+		index("post_id_idx").on(table.postId),
+	],
 );
+
+// Define relations after all tables are defined
+export const usersRelations = relations(users, ({ many }) => ({
+	posts: many(posts),
+}));
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+	owner: one(users, {
+		fields: [posts.ownerId],
+		references: [users.id],
+	}),
+	bookmarks: many(bookmarks),
+}));
 
 export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
 	owner: one(users, {

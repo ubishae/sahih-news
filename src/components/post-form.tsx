@@ -4,8 +4,7 @@ import RichTextEditor from "@/components/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
 import { useForm } from "@tanstack/react-form";
-import { Loader } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Edit, Loader } from "lucide-react";
 import { toast } from "sonner";
 import {
 	Sheet,
@@ -15,17 +14,47 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "./ui/sheet";
+import type { posts } from "@/server/db/schema";
+import { DialogTrigger } from "./ui/dialog";
 
-export default function PostForm() {
-	const router = useRouter();
+export default function PostForm({
+	post,
+}: { post?: typeof posts.$inferSelect }) {
 	const utils = api.useUtils();
-	const { mutate: createPost } = api.post.create.useMutation();
+	const { mutate: createPost, isPending: isCreatingPost } =
+		api.post.create.useMutation();
+	const { mutate: updatePost, isPending: isUpdatingPost } =
+		api.post.update.useMutation();
 
 	const form = useForm({
 		defaultValues: {
-			content: "",
+			content: post?.content ?? "",
 		},
 		onSubmit: ({ value }) => {
+			if (post) {
+				updatePost(
+					{
+						id: post.id,
+						content: value.content,
+					},
+					{
+						onSuccess: () => {
+							utils.post.getAll.invalidate();
+							toast("Post updated successfully", {
+								duration: 5000,
+							});
+							form.reset();
+						},
+						onError: (e) => {
+							console.error(e);
+							toast("Failed to update post", {
+								duration: 5000,
+							});
+						},
+					},
+				);
+				return;
+			}
 			createPost(value, {
 				onSuccess: () => {
 					utils.post.getAll.invalidate();
@@ -33,9 +62,9 @@ export default function PostForm() {
 						duration: 5000,
 					});
 					form.reset();
-					router.push("/posts");
 				},
-				onError: () => {
+				onError: (e) => {
+					console.error(e);
 					toast("Failed to create post", {
 						duration: 5000,
 					});
@@ -47,14 +76,20 @@ export default function PostForm() {
 	return (
 		<Sheet>
 			<SheetTrigger asChild>
-				<Button variant="outline">New Post</Button>
+				{post ? (
+					<Edit className="h-4 w-4" />
+				) : (
+					<Button variant="outline">New Post</Button>
+				)}
 			</SheetTrigger>
 
 			<SheetContent side="bottom" className="h-full w-full px-10 py-5">
 				<SheetHeader>
-					<SheetTitle>Create New Post</SheetTitle>
+					<SheetTitle>{post ? "Update Post" : "Create New Post"}</SheetTitle>
 					<SheetDescription>
-						Create a new post and share your thoughts with the world.
+						{post
+							? "Update your post"
+							: "Create a new post and share your thoughts with the world."}
 					</SheetDescription>
 				</SheetHeader>
 				<form
@@ -82,14 +117,28 @@ export default function PostForm() {
 						children={([canSubmit, isSubmitting]) => (
 							<div className="mt-5 flex justify-between">
 								<div>
-									<Button variant="outline" disabled={isSubmitting}>
-										Cancel
-									</Button>
+									<DialogTrigger>
+										<Button
+											type="button"
+											variant="outline"
+											disabled={
+												isSubmitting || isUpdatingPost || isCreatingPost
+											}
+										>
+											Cancel
+										</Button>
+									</DialogTrigger>
 								</div>
 								<div className="flex gap-5">
 									<Button
+										type="button"
 										variant="secondary"
-										disabled={!canSubmit || isSubmitting}
+										disabled={
+											!canSubmit ||
+											isSubmitting ||
+											isUpdatingPost ||
+											isCreatingPost
+										}
 									>
 										{isSubmitting ? (
 											<Loader className="h-4 w-4 animate-spin" />
@@ -98,11 +147,19 @@ export default function PostForm() {
 										)}
 									</Button>
 									<SheetTrigger asChild>
-										<Button type="submit" disabled={!canSubmit || isSubmitting}>
+										<Button
+											type="submit"
+											disabled={
+												!canSubmit ||
+												isSubmitting ||
+												isUpdatingPost ||
+												isCreatingPost
+											}
+										>
 											{isSubmitting ? (
 												<Loader className="h-4 w-4 animate-spin" />
 											) : (
-												"Publish"
+												<span>{post ? "Update Post" : "Publish"}</span>
 											)}
 										</Button>
 									</SheetTrigger>
