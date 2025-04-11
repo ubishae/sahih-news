@@ -1,6 +1,7 @@
 // Example model schema from the Drizzle docs
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
+import { relations } from "drizzle-orm";
 import {
 	pgTableCreator,
 	serial,
@@ -8,6 +9,7 @@ import {
 	timestamp,
 	varchar,
 	index,
+	integer,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -34,3 +36,24 @@ export const users = createTable(
 		usernameIdx: index("username_idx").on(table.username),
 	}),
 );
+
+export const usersRelations = relations(users, ({ many }) => ({
+	posts: many(posts),
+}));
+
+export const posts = createTable("posts", {
+	id: serial("id").primaryKey(),
+	content: text("content").notNull(),
+	ownerId: integer("owner_id")
+		.notNull()
+		.references(() => users.id),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const postsRelations = relations(posts, ({ one }) => ({
+	owner: one(users, {
+		fields: [posts.ownerId],
+		references: [users.id],
+	}),
+}));
