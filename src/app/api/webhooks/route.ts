@@ -5,6 +5,14 @@ import { users } from "@/server/db/schema";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
+// Helper function to generate a unique username
+const generateUniqueUsername = (baseUsername: string | null, userId: string) => {
+  // Create a base username if none provided
+  const base = baseUsername || `user_${userId.substring(0, 8)}`;
+  // Add a timestamp suffix to ensure uniqueness
+  return `${base}_${Date.now().toString().substring(7)}`;
+};
+
 export async function POST(req: Request) {
 	// Get the webhook signing secret from the environment variables
 	const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -104,10 +112,13 @@ export async function POST(req: Request) {
 		}
 
 		try {
+			// Generate a unique username
+			const uniqueUsername = generateUniqueUsername(username, id);
+			
 			// Create a new user in the database
 			await db.insert(users).values({
 				clerkId: id,
-				username: username || `user_${id.substring(0, 8)}`, // Use username or generate one
+				username: uniqueUsername,
 				displayName:
 					first_name && last_name
 						? `${first_name} ${last_name}`
@@ -148,9 +159,12 @@ export async function POST(req: Request) {
 					return new Response("No email found for user", { status: 400 });
 				}
 
+				// Generate a unique username for the new user
+				const uniqueUsername = generateUniqueUsername(username, id);
+
 				await db.insert(users).values({
 					clerkId: id,
-					username: username || `user_${id.substring(0, 8)}`,
+					username: uniqueUsername,
 					displayName:
 						first_name && last_name
 							? `${first_name} ${last_name}`
@@ -159,11 +173,19 @@ export async function POST(req: Request) {
 					createdAt: new Date(),
 				});
 			} else {
+				// For updates, only change the username if it's provided and different
+				let updatedUsername = existingUser[0]?.username;
+				
+				if (username && username !== existingUser[0]?.username) {
+					// If username is changing, ensure it's unique
+					updatedUsername = generateUniqueUsername(username, id);
+				}
+				
 				// Update existing user
 				await db
 					.update(users)
 					.set({
-						username: username || existingUser[0]?.username,
+						username: updatedUsername,
 						displayName:
 							first_name && last_name
 								? `${first_name} ${last_name}`
