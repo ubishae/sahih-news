@@ -37,7 +37,7 @@ export default function RootLayout({
 	return (
 		<ClerkProvider>
 			<html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
-				<body>
+				<body className="flex min-h-screen flex-col">
 					<ThemeProvider
 						attribute="class"
 						defaultTheme="system"
@@ -45,27 +45,82 @@ export default function RootLayout({
 						disableTransitionOnChange
 					>
 						<TRPCReactProvider>
-							<header className="flex h-16 items-center justify-between gap-4 p-4">
-								<div className="flex grow gap-5">
-									<SignedIn>
-										<Link href="/posts" className="hover:underline">
-											Posts
+							<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+								<div className="flex h-16 items-center justify-around">
+									<div className="flex items-center gap-2">
+										<Link href="/" className="flex items-center gap-2">
+											<img
+												src="/logo.png"
+												alt="SahihNews Logo"
+												className="h-8 w-8"
+											/>
+											<span className="hidden font-semibold text-lg sm:inline-block">
+												SahihNews
+											</span>
 										</Link>
-										<Link href="/bookmarks" className="hover:underline">
-											Bookmarks
-										</Link>
-									</SignedIn>
+									</div>
+
+									<nav className="mx-6 flex items-center gap-6">
+										<SignedIn>
+											<Link
+												href="/posts"
+												className="font-medium text-sm transition-colors hover:text-primary"
+											>
+												Posts
+											</Link>
+											<Link
+												href="/bookmarks"
+												className="font-medium text-sm transition-colors hover:text-primary"
+											>
+												Bookmarks
+											</Link>
+										</SignedIn>
+									</nav>
+
+									<div className="flex items-center gap-4">
+										<SignedOut>
+											<div className="flex gap-2">
+												<SignInButton mode="modal" />
+												<SignUpButton mode="modal" />
+											</div>
+										</SignedOut>
+										<SignedIn>
+											<UserDropdown />
+										</SignedIn>
+										<ThemeToggle />
+									</div>
 								</div>
-								<SignedOut>
-									<SignInButton />
-									<SignUpButton />
-								</SignedOut>
-								<SignedIn>
-									<UserDropdown />
-								</SignedIn>
-								<ThemeToggle />
 							</header>
-							{children}
+
+							<main className="flex-1 py-6">{children}</main>
+
+							<footer className="border-t bg-background/95 py-4">
+								<div className="flex flex-col items-center justify-around sm:flex-row">
+									<div className="text-muted-foreground text-sm">
+										© {new Date().getFullYear()} SahihNews. All rights reserved.
+									</div>
+									<div className="mt-2 flex items-center gap-4 sm:mt-0">
+										<Link
+											href="/about"
+											className="text-muted-foreground text-xs transition-colors hover:text-primary"
+										>
+											About
+										</Link>
+										<Link
+											href="/privacy"
+											className="text-muted-foreground text-xs transition-colors hover:text-primary"
+										>
+											Privacy
+										</Link>
+										<Link
+											href="/terms"
+											className="text-muted-foreground text-xs transition-colors hover:text-primary"
+										>
+											Terms
+										</Link>
+									</div>
+								</div>
+							</footer>
 
 							<Toaster />
 						</TRPCReactProvider>

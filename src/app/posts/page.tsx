@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
-import { useAuth } from "@clerk/nextjs";
+import { SignedIn, useAuth } from "@clerk/nextjs";
 import { Bookmark, Clock, ThumbsDown, ThumbsUp } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -75,7 +75,9 @@ export default function PostsPage() {
 		<main className="container mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-0">
 			<div className="mb-8 rounded-lg border bg-card p-4 shadow-sm">
 				<h2 className="mb-4 font-semibold text-xl">Share News</h2>
-				<PostForm />
+				<SignedIn>
+					<PostForm />
+				</SignedIn>
 			</div>
 
 			{isLoadingPosts ? (
