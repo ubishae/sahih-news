@@ -19,7 +19,7 @@ import { toast } from "sonner";
 export default function PostsPage() {
 	const utils = api.useUtils();
 
-	const { data: posts, isLoading: isLoadingPosts } = api.post.getAll.useQuery();
+	const { data: posts, isLoading: isLoadingPosts } = api.post.all.useQuery();
 
 	const { mutate: addBookmark, isPending: isAddingBookmark } =
 		api.bookmark.add.useMutation({
@@ -27,7 +27,8 @@ export default function PostsPage() {
 				toast("Bookmark added", {
 					icon: <Bookmark className="fill-current" />,
 				});
-				utils.post.getAll.invalidate();
+				utils.post.all.invalidate();
+				utils.bookmark.all.invalidate();
 			},
 		});
 
@@ -37,7 +38,7 @@ export default function PostsPage() {
 				toast("Bookmark removed", {
 					icon: <Bookmark />,
 				});
-				utils.post.getAll.invalidate();
+				utils.post.all.invalidate();
 			},
 		});
 

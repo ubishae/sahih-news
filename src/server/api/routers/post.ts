@@ -5,7 +5,7 @@ import { desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 export const postRouter = createTRPCRouter({
-	getAll: publicProcedure.query(async ({ ctx }) => {
+	all: publicProcedure.query(async ({ ctx }) => {
 		if (!ctx.user) {
 			const allPosts = await ctx.db.query.posts.findMany({
 				orderBy: desc(postsTable.createdAt),

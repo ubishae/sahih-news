@@ -17,6 +17,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserDropdown } from "@/components/user-dropdown";
+import Link from "next/link";
 
 export const metadata: Metadata = {
 	title: "SahihNews - Verified News Platform",
@@ -44,7 +45,17 @@ export default function RootLayout({
 						disableTransitionOnChange
 					>
 						<TRPCReactProvider>
-							<header className="flex h-16 items-center justify-end gap-4 p-4">
+							<header className="flex h-16 items-center justify-between gap-4 p-4">
+								<div className="flex grow gap-5">
+									<SignedIn>
+										<Link href="/posts" className="hover:underline">
+											Posts
+										</Link>
+										<Link href="/bookmarks" className="hover:underline">
+											Bookmarks
+										</Link>
+									</SignedIn>
+								</div>
 								<SignedOut>
 									<SignInButton />
 									<SignUpButton />

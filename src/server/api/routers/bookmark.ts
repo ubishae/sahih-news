@@ -8,6 +8,9 @@ export const bookmarkRouter = createTRPCRouter({
 	all: protectedProcedure.query(({ ctx }) => {
 		return ctx.db.query.bookmarks.findMany({
 			where: (bookmarks) => eq(bookmarks.ownerId, ctx.id),
+			with: {
+				post: { with: { owner: true } },
+			},
 		});
 	}),
 
