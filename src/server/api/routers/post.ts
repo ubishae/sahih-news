@@ -15,17 +15,28 @@ export const postRouter = createTRPCRouter({
 				orderBy: desc(postsTable.createdAt),
 				with: {
 					owner: true,
+					votes: true,
 				},
 			});
 
-			return allPosts.map((post) => ({
-				...post,
-				isBookmarked: false,
-				isOwner: false,
-				voteType: null,
-				upvoteCount: 0,
-				downvoteCount: 0,
-			}));
+			return allPosts.map((post) => {
+				// Calculate upvote and downvote counts
+				const upvoteCount = post.votes.filter(
+					(vote) => vote.type === "upvote",
+				).length;
+				const downvoteCount = post.votes.filter(
+					(vote) => vote.type === "downvote",
+				).length;
+
+				return {
+					...post,
+					isBookmarked: false,
+					isOwner: false,
+					voteType: null,
+					upvoteCount,
+					downvoteCount,
+				};
+			});
 		}
 
 		const allPosts = await ctx.db.query.posts.findMany({
