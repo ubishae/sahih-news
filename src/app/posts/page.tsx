@@ -18,12 +18,14 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
+import { useAuth } from "@clerk/nextjs";
 import { Bookmark, Clock, ThumbsDown, ThumbsUp } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 
 export default function PostsPage() {
 	const utils = api.useUtils();
+	const { isSignedIn } = useAuth();
 
 	const { data: posts, isLoading: isLoadingPosts } = api.post.all.useQuery();
 
@@ -162,7 +164,7 @@ export default function PostsPage() {
 													<Button
 														variant="ghost"
 														size="sm"
-														disabled={isUpvoting || isDownvoting}
+														disabled={isUpvoting || isDownvoting || !isSignedIn}
 														className={`h-8 rounded-r-none border-r px-2 ${
 															post.voteType === "upvote"
 																? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
@@ -188,7 +190,7 @@ export default function PostsPage() {
 													<Button
 														variant="ghost"
 														size="sm"
-														disabled={isUpvoting || isDownvoting}
+														disabled={isUpvoting || isDownvoting || !isSignedIn}
 														className={`h-8 rounded-l-none px-2 ${
 															post.voteType === "downvote"
 																? "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
