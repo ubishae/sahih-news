@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { posts as postsTable } from "@/server/db/schema";
+import {
+	posts as postsTable,
+	votes as votesTable,
+	voteTypes,
+} from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -18,6 +22,9 @@ export const postRouter = createTRPCRouter({
 				...post,
 				isBookmarked: false,
 				isOwner: false,
+				voteType: null,
+				upvoteCount: 0,
+				downvoteCount: 0,
 			}));
 		}
 
@@ -26,6 +33,7 @@ export const postRouter = createTRPCRouter({
 			with: {
 				bookmarks: true,
 				owner: true,
+				votes: true,
 			},
 		});
 
@@ -37,13 +45,29 @@ export const postRouter = createTRPCRouter({
 			});
 
 			if (dbUser) {
-				return allPosts.map((post) => ({
-					...post,
-					isBookmarked: post.bookmarks.some(
-						(bookmark) => bookmark.ownerId === dbUser.id,
-					),
-					isOwner: post.ownerId === dbUser.id,
-				}));
+				return allPosts.map((post) => {
+					// Find user's vote for this post if it exists
+					const userVote = post.votes.find((vote) => vote.userId === dbUser.id);
+
+					// Calculate upvote and downvote counts
+					const upvoteCount = post.votes.filter(
+						(vote) => vote.type === "upvote",
+					).length;
+					const downvoteCount = post.votes.filter(
+						(vote) => vote.type === "downvote",
+					).length;
+
+					return {
+						...post,
+						isBookmarked: post.bookmarks.some(
+							(bookmark) => bookmark.ownerId === dbUser.id,
+						),
+						isOwner: post.ownerId === dbUser.id,
+						voteType: userVote ? userVote.type : null,
+						upvoteCount,
+						downvoteCount,
+					};
+				});
 			}
 		}
 	}),

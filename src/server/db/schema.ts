@@ -10,6 +10,7 @@ import {
 	varchar,
 	index,
 	integer,
+	pgEnum,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -20,6 +21,10 @@ import {
  */
 // export const createTable = pgTableCreator((name) => `sahih-news_${name}`);
 export const createTable = pgTableCreator((name) => `${name}`);
+
+export const voteType = pgEnum("vote_type", ["upvote", "downvote"]);
+
+export const voteTypes = voteType.enumValues;
 
 export const users = createTable(
 	"users",
@@ -43,7 +48,7 @@ export const posts = createTable("posts", {
 	content: text("content").notNull(),
 	ownerId: integer("owner_id")
 		.notNull()
-		.references(() => users.id),
+		.references(() => users.id, { onDelete: "cascade" }),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -54,23 +59,38 @@ export const bookmarks = createTable(
 		id: serial("id").primaryKey(),
 		ownerId: integer("owner_id")
 			.notNull()
-			.references(() => users.id),
+			.references(() => users.id, { onDelete: "cascade" }),
 		postId: integer("post_id")
 			.notNull()
-			.references(() => posts.id),
+			.references(() => posts.id, { onDelete: "cascade" }),
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
 	},
-	(table) => [
-		index("unique_idx").on(table.ownerId, table.postId),
-		index("owner_id_idx").on(table.ownerId),
-		index("post_id_idx").on(table.postId),
-	],
+	(table) => [index("unique_bookmark_idx").on(table.ownerId, table.postId)],
+);
+
+export const votes = createTable(
+	"votes",
+	{
+		id: serial("id").primaryKey(),
+		userId: integer("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		postId: integer("post_id")
+			.notNull()
+			.references(() => posts.id, { onDelete: "cascade" }),
+		type: voteType("type").notNull(),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	},
+	(table) => [index("unique_votes_idx").on(table.userId, table.postId)],
 );
 
 // Define relations after all tables are defined
 export const usersRelations = relations(users, ({ many }) => ({
 	posts: many(posts),
+	bookmarks: many(bookmarks),
+	votes: many(votes),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -79,6 +99,7 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
 		references: [users.id],
 	}),
 	bookmarks: many(bookmarks),
+	votes: many(votes),
 }));
 
 export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
@@ -88,6 +109,17 @@ export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
 	}),
 	post: one(posts, {
 		fields: [bookmarks.postId],
+		references: [posts.id],
+	}),
+}));
+
+export const votesRelations = relations(votes, ({ one }) => ({
+	user: one(users, {
+		fields: [votes.userId],
+		references: [users.id],
+	}),
+	post: one(posts, {
+		fields: [votes.postId],
 		references: [posts.id],
 	}),
 }));
