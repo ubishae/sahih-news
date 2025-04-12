@@ -35,7 +35,7 @@ export default function ProfilePage() {
 	});
 
 	return (
-		<div className="grid max-w-2xl place-items-center py-10">
+		<div className="grid place-items-center py-10">
 			<Card>
 				<CardHeader>
 					<CardTitle>Profile Settings</CardTitle>

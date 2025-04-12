@@ -39,7 +39,7 @@ export default function PostForm({
 					},
 					{
 						onSuccess: () => {
-							utils.post.getAll.invalidate();
+							utils.post.all.invalidate();
 							toast("Post updated successfully", {
 								duration: 5000,
 							});
@@ -57,7 +57,7 @@ export default function PostForm({
 			}
 			createPost(value, {
 				onSuccess: () => {
-					utils.post.getAll.invalidate();
+					utils.post.all.invalidate();
 					toast("Post created successfully", {
 						duration: 5000,
 					});

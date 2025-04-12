@@ -95,7 +95,7 @@ export default function PostsPage() {
 											</div>
 										</div>
 									</div>
-									<PostForm post={post} />
+									{post.isOwner && <PostForm post={post} />}
 								</div>
 							</CardHeader>
 							<CardContent className="pb-3">

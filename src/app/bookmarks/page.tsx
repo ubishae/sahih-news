@@ -79,7 +79,6 @@ export default function BookmarksPage() {
 											</div>
 										</div>
 									</div>
-									<PostForm post={post} />
 								</div>
 							</CardHeader>
 							<CardContent className="pb-3">
