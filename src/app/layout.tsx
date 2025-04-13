@@ -100,8 +100,7 @@ export default function RootLayout({
 								<footer className="border-t bg-background/95 py-4">
 									<div className="flex flex-col items-center justify-around sm:flex-row">
 										<div className="text-muted-foreground text-sm">
-											{new Date().getFullYear()} SahihNews. All rights
-											reserved.
+											{new Date().getFullYear()} SahihNews. All rights reserved.
 										</div>
 										<div className="mt-2 flex items-center gap-4 sm:mt-0">
 											<Link
