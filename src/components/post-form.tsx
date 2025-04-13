@@ -117,7 +117,7 @@ export default function PostForm({
 						children={([canSubmit, isSubmitting]) => (
 							<div className="mt-5 flex justify-between">
 								<div>
-									<DialogTrigger>
+									<DialogTrigger asChild>
 										<Button
 											type="button"
 											variant="outline"

@@ -52,9 +52,9 @@ export default function PostsPage() {
 
 	const { mutate: upvote, isPending: isUpvoting } = api.vote.upvote.useMutation(
 		{
-			onSuccess: () => {
+			onSuccess: (data) => {
 				utils.post.all.invalidate();
-				toast("Post upvoted", {
+				toast(data.message, {
 					icon: <ThumbsUp className="fill-current" />,
 				});
 			},
@@ -63,9 +63,9 @@ export default function PostsPage() {
 
 	const { mutate: downvote, isPending: isDownvoting } =
 		api.vote.downvote.useMutation({
-			onSuccess: () => {
+			onSuccess: (data) => {
 				utils.post.all.invalidate();
-				toast("Post downvoted", {
+				toast(data.message, {
 					icon: <ThumbsDown className="fill-current" />,
 				});
 			},

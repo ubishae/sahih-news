@@ -86,11 +86,25 @@ export const votes = createTable(
 	(table) => [index("unique_votes_idx").on(table.userId, table.postId)],
 );
 
+export const comments = createTable("comments", {
+	id: serial("id").primaryKey(),
+	content: text("content").notNull(),
+	postId: integer("post_id")
+		.notNull()
+		.references(() => posts.id, { onDelete: "cascade" }),
+	ownerId: integer("owner_id")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Define relations after all tables are defined
 export const usersRelations = relations(users, ({ many }) => ({
 	posts: many(posts),
 	bookmarks: many(bookmarks),
 	votes: many(votes),
+	comments: many(comments),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -100,6 +114,7 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
 	}),
 	bookmarks: many(bookmarks),
 	votes: many(votes),
+	comments: many(comments),
 }));
 
 export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
@@ -120,6 +135,13 @@ export const votesRelations = relations(votes, ({ one }) => ({
 	}),
 	post: one(posts, {
 		fields: [votes.postId],
+		references: [posts.id],
+	}),
+}));
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+	post: one(posts, {
+		fields: [comments.postId],
 		references: [posts.id],
 	}),
 }));

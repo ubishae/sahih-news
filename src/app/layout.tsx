@@ -18,6 +18,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserDropdown } from "@/components/user-dropdown";
 import Link from "next/link";
+import { ModalProvider, ModalManager } from "@/components/modal-manager";
 
 export const metadata: Metadata = {
 	title: "SahihNews - Verified News Platform",
@@ -44,86 +45,90 @@ export default function RootLayout({
 						enableSystem
 						disableTransitionOnChange
 					>
-						<TRPCReactProvider>
-							<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-								<div className="flex h-16 items-center justify-around">
-									<div className="flex items-center gap-2">
-										<Link href="/" className="flex items-center gap-2">
-											<img
-												src="/logo.png"
-												alt="SahihNews Logo"
-												className="h-8 w-8"
-											/>
-											<span className="hidden font-semibold text-lg sm:inline-block">
-												SahihNews
-											</span>
-										</Link>
-									</div>
+						<ModalProvider>
+							<ModalManager />
+							<TRPCReactProvider>
+								<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+									<div className="flex h-16 items-center justify-around">
+										<div className="flex items-center gap-2">
+											<Link href="/" className="flex items-center gap-2">
+												<img
+													src="/logo.png"
+													alt="SahihNews Logo"
+													className="h-8 w-8"
+												/>
+												<span className="hidden font-semibold text-lg sm:inline-block">
+													SahihNews
+												</span>
+											</Link>
+										</div>
 
-									<nav className="mx-6 flex items-center gap-6">
-										<SignedIn>
+										<nav className="mx-6 flex items-center gap-6">
+											<SignedIn>
+												<Link
+													href="/posts"
+													className="font-medium text-sm transition-colors hover:text-primary"
+												>
+													Posts
+												</Link>
+												<Link
+													href="/bookmarks"
+													className="font-medium text-sm transition-colors hover:text-primary"
+												>
+													Bookmarks
+												</Link>
+											</SignedIn>
+										</nav>
+
+										<div className="flex items-center gap-4">
+											<SignedOut>
+												<div className="flex gap-2">
+													<SignInButton mode="modal" />
+													<SignUpButton mode="modal" />
+												</div>
+											</SignedOut>
+											<SignedIn>
+												<UserDropdown />
+											</SignedIn>
+											<ThemeToggle />
+										</div>
+									</div>
+								</header>
+
+								<main className="flex-1 py-6">{children}</main>
+
+								<footer className="border-t bg-background/95 py-4">
+									<div className="flex flex-col items-center justify-around sm:flex-row">
+										<div className="text-muted-foreground text-sm">
+											{new Date().getFullYear()} SahihNews. All rights
+											reserved.
+										</div>
+										<div className="mt-2 flex items-center gap-4 sm:mt-0">
 											<Link
-												href="/posts"
-												className="font-medium text-sm transition-colors hover:text-primary"
+												href="/about"
+												className="text-muted-foreground text-xs transition-colors hover:text-primary"
 											>
-												Posts
+												About
 											</Link>
 											<Link
-												href="/bookmarks"
-												className="font-medium text-sm transition-colors hover:text-primary"
+												href="/privacy"
+												className="text-muted-foreground text-xs transition-colors hover:text-primary"
 											>
-												Bookmarks
+												Privacy
 											</Link>
-										</SignedIn>
-									</nav>
-
-									<div className="flex items-center gap-4">
-										<SignedOut>
-											<div className="flex gap-2">
-												<SignInButton mode="modal" />
-												<SignUpButton mode="modal" />
-											</div>
-										</SignedOut>
-										<SignedIn>
-											<UserDropdown />
-										</SignedIn>
-										<ThemeToggle />
+											<Link
+												href="/terms"
+												className="text-muted-foreground text-xs transition-colors hover:text-primary"
+											>
+												Terms
+											</Link>
+										</div>
 									</div>
-								</div>
-							</header>
+								</footer>
 
-							<main className="flex-1 py-6">{children}</main>
-
-							<footer className="border-t bg-background/95 py-4">
-								<div className="flex flex-col items-center justify-around sm:flex-row">
-									<div className="text-muted-foreground text-sm">
-										© {new Date().getFullYear()} SahihNews. All rights reserved.
-									</div>
-									<div className="mt-2 flex items-center gap-4 sm:mt-0">
-										<Link
-											href="/about"
-											className="text-muted-foreground text-xs transition-colors hover:text-primary"
-										>
-											About
-										</Link>
-										<Link
-											href="/privacy"
-											className="text-muted-foreground text-xs transition-colors hover:text-primary"
-										>
-											Privacy
-										</Link>
-										<Link
-											href="/terms"
-											className="text-muted-foreground text-xs transition-colors hover:text-primary"
-										>
-											Terms
-										</Link>
-									</div>
-								</div>
-							</footer>
-
-							<Toaster />
-						</TRPCReactProvider>
+								<Toaster />
+							</TRPCReactProvider>
+						</ModalProvider>
 					</ThemeProvider>
 				</body>
 			</html>

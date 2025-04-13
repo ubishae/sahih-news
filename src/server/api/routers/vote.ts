@@ -33,23 +33,27 @@ export const voteRouter = createTRPCRouter({
 						.where(
 							and(eq(votes.userId, ctx.id), eq(votes.postId, input.postId)),
 						);
-				} else {
-					// Otherwise update the vote to upvote
-					await ctx.db
-						.update(votes)
-						.set({ type: "upvote" })
-						.where(
-							and(eq(votes.userId, ctx.id), eq(votes.postId, input.postId)),
-						);
+
+					return { message: "Vote removed" };
 				}
-			} else {
-				// Insert a new vote
-				await ctx.db.insert(votes).values({
-					userId: ctx.id,
-					postId: input.postId,
-					type: "upvote",
-				});
+
+				// Update the vote to upvote
+				await ctx.db
+					.update(votes)
+					.set({ type: "upvote" })
+					.where(and(eq(votes.userId, ctx.id), eq(votes.postId, input.postId)));
+
+				return { message: "Vote updated" };
 			}
+
+			// Insert a new vote
+			await ctx.db.insert(votes).values({
+				userId: ctx.id,
+				postId: input.postId,
+				type: "upvote",
+			});
+
+			return { message: "Vote added" };
 		}),
 
 	downvote: protectedProcedure
@@ -80,22 +84,26 @@ export const voteRouter = createTRPCRouter({
 						.where(
 							and(eq(votes.userId, ctx.id), eq(votes.postId, input.postId)),
 						);
-				} else {
-					// Otherwise update the vote to downvote
-					await ctx.db
-						.update(votes)
-						.set({ type: "downvote" })
-						.where(
-							and(eq(votes.userId, ctx.id), eq(votes.postId, input.postId)),
-						);
+
+					return { message: "Vote removed" };
 				}
-			} else {
-				// Insert a new vote
-				await ctx.db.insert(votes).values({
-					userId: ctx.id,
-					postId: input.postId,
-					type: "downvote",
-				});
+
+				// Update the vote to downvote
+				await ctx.db
+					.update(votes)
+					.set({ type: "downvote" })
+					.where(and(eq(votes.userId, ctx.id), eq(votes.postId, input.postId)));
+
+				return { message: "Vote updated" };
 			}
+
+			// Insert a new vote
+			await ctx.db.insert(votes).values({
+				userId: ctx.id,
+				postId: input.postId,
+				type: "downvote",
+			});
+
+			return { message: "Vote added" };
 		}),
 });
