@@ -1,0 +1,1 @@
+export const GLOBAL_TOAST_DISMISS_TIMEOUT = 2000;

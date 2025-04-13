@@ -11,11 +11,15 @@ export const SheetExample = () => {
 	// Example of opening a content sheet
 	const openContentSheet = (
 		side: "top" | "right" | "bottom" | "left" = "right",
+		width?: "sm" | "md" | "lg" | "xl" | "2xl" | "full",
+		height?: "sm" | "md" | "lg" | "xl" | "2xl" | "full",
 	) => {
 		sheets.openContentSheet({
 			title: "User Profile",
 			description: "Update your profile information",
 			side,
+			width,
+			height,
 			children: (
 				<div className="py-4">
 					<div className="grid w-full items-center gap-4">
@@ -46,6 +50,8 @@ export const SheetExample = () => {
 	// Example of opening a custom component sheet
 	const openCustomSheet = (
 		side: "top" | "right" | "bottom" | "left" = "right",
+		width?: "sm" | "md" | "lg" | "xl" | "2xl" | "full",
+		height?: "sm" | "md" | "lg" | "xl" | "2xl" | "full",
 	) => {
 		sheets.openSheet(
 			<div className="space-y-4">
@@ -68,6 +74,8 @@ export const SheetExample = () => {
 			</div>,
 			{},
 			side,
+			width,
+			height,
 		);
 	};
 
@@ -83,6 +91,12 @@ export const SheetExample = () => {
 					<Button onClick={() => openContentSheet("top")}>Top Sheet</Button>
 					<Button onClick={() => openContentSheet("bottom")}>
 						Bottom Sheet
+					</Button>
+					<Button onClick={() => openContentSheet("right", "lg")}>
+						Right Sheet with width
+					</Button>
+					<Button onClick={() => openContentSheet("right", "lg", "lg")}>
+						Right Sheet with width and height
 					</Button>
 				</div>
 			</div>
@@ -101,6 +115,12 @@ export const SheetExample = () => {
 					</Button>
 					<Button onClick={() => openCustomSheet("bottom")}>
 						Bottom Custom Sheet
+					</Button>
+					<Button onClick={() => openCustomSheet("right", "lg")}>
+						Right Custom Sheet with width
+					</Button>
+					<Button onClick={() => openCustomSheet("right", "lg", "lg")}>
+						Right Custom Sheet with width and height
 					</Button>
 				</div>
 			</div>

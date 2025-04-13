@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState } from "react";
 import { nanoid } from "nanoid";
-import type { SheetSide } from "./types";
+import type { SheetSide, SheetWidth, SheetHeight } from "./types";
 
 export type SheetProps = {
 	id: string;
@@ -10,6 +10,8 @@ export type SheetProps = {
 	props?: Record<string, unknown>;
 	onClose?: () => void;
 	side?: SheetSide;
+	width?: SheetWidth;
+	height?: SheetHeight;
 };
 
 export type ContentSheetProps = {
@@ -18,6 +20,8 @@ export type ContentSheetProps = {
 	children: React.ReactNode;
 	onClose?: () => void;
 	side?: SheetSide;
+	width?: SheetWidth;
+	height?: SheetHeight;
 };
 
 type SheetContextType = {
@@ -26,6 +30,8 @@ type SheetContextType = {
 		component: React.ReactNode,
 		props?: Record<string, unknown>,
 		side?: SheetSide,
+		width?: SheetWidth,
+		height?: SheetHeight,
 	) => string;
 	openContentSheet: (props: ContentSheetProps) => string;
 	closeSheet: (id: string) => void;
@@ -43,15 +49,22 @@ export const SheetProvider: React.FC<{ children: React.ReactNode }> = ({
 		component: React.ReactNode,
 		props?: Record<string, unknown>,
 		side: SheetSide = "right",
+		width?: SheetWidth,
+		height?: SheetHeight,
 	) => {
 		const id = nanoid();
-		setSheets((current) => [...current, { id, component, props, side }]);
+		setSheets((current) => [
+			...current,
+			{ id, component, props, side, width, height },
+		]);
 		return id;
 	};
 
 	const openContentSheet = (props: ContentSheetProps) => {
 		const id = nanoid();
 		const side = props.side || "right";
+		const width = props.width;
+		const height = props.height;
 		setSheets((current) => [
 			...current,
 			{
@@ -59,6 +72,8 @@ export const SheetProvider: React.FC<{ children: React.ReactNode }> = ({
 				component: "content",
 				props,
 				side,
+				width,
+				height,
 				onClose: () => {
 					if (props.onClose) {
 						props.onClose();

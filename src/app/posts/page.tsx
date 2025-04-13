@@ -1,7 +1,9 @@
 "use client";
 
+import { useModals } from "@/components/modal-manager";
 import PostForm from "@/components/post-form";
 import RichTextPreview from "@/components/rich-text-preview";
+import { useSheets } from "@/components/sheet-manager";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -9,6 +11,12 @@ import {
 	CardFooter,
 	CardHeader,
 } from "@/components/ui/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Tooltip,
@@ -19,7 +27,13 @@ import {
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { SignedIn, useAuth } from "@clerk/nextjs";
-import { Bookmark, Clock, ThumbsDown, ThumbsUp } from "lucide-react";
+import {
+	Bookmark,
+	Clock,
+	MoreVertical,
+	ThumbsDown,
+	ThumbsUp,
+} from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -70,6 +84,9 @@ export default function PostsPage() {
 				});
 			},
 		});
+
+	const { openContentSheet } = useSheets();
+	const { openConfirmModal } = useModals();
 
 	return (
 		<main className="container mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-0">
@@ -146,7 +163,53 @@ export default function PostsPage() {
 									</div>
 									{post.isOwner && (
 										<div className="ml-2">
-											<PostForm post={post} />
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button variant="ghost" size="sm">
+														<MoreVertical className="h-4 w-4" />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent>
+													<DropdownMenuItem
+														onClick={() =>
+															openContentSheet({
+																title: "Edit Post",
+																description: "Edit post details",
+																children: (
+																	<div className="p-5">
+																		<PostForm post={post} />
+																	</div>
+																),
+																side: "bottom",
+																width: "full",
+																height: "full",
+															})
+														}
+													>
+														Edit Post
+													</DropdownMenuItem>
+													<DropdownMenuItem
+														onClick={() =>
+															openConfirmModal({
+																title: "Delete Post",
+																description:
+																	"Are you sure you want to delete this post? This action cannot be undone.",
+																labels: { confirm: "Delete", cancel: "Cancel" },
+																confirmProps: { variant: "destructive" },
+																onConfirm: () => {
+																	console.log("Post deleted");
+																	// Call your API to delete the post
+																},
+																onCancel: () => {
+																	console.log("Delete post canceled");
+																},
+															})
+														}
+													>
+														Delete Post
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
 										</div>
 									)}
 								</div>
