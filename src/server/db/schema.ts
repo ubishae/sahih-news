@@ -144,4 +144,8 @@ export const commentsRelations = relations(comments, ({ one }) => ({
 		fields: [comments.postId],
 		references: [posts.id],
 	}),
+	owner: one(users, {
+		fields: [comments.ownerId],
+		references: [users.id],
+	}),
 }));

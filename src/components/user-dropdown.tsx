@@ -20,9 +20,12 @@ import {
 	User,
 } from "lucide-react";
 import Link from "next/link";
-import { useUser, SignOutButton, useAuth } from "@clerk/nextjs";
+import { useUser, SignOutButton } from "@clerk/nextjs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/trpc/react";
+import { Badge } from "./ui/badge";
+import { cn } from "@/lib/utils";
+import { Progress } from "./ui/progress";
 
 export function UserDropdown() {
 	const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
@@ -80,34 +83,55 @@ export function UserDropdown() {
 				<DropdownMenuSeparator />
 
 				{/* Credibility score */}
-				{/* <div className="px-2 py-1.5">
+				<div className="px-2 py-1.5">
 					<div className="mb-1 flex items-center justify-between">
 						<span className="text-muted-foreground text-xs">
 							Credibility Score
 						</span>
 						<Badge
 							variant="outline"
-							className="bg-green-100 text-green-800 text-xs dark:bg-green-900/20 dark:text-green-400"
+							className={cn("text-xs", {
+								"bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400":
+									currentUser?.credibilityScore >= 50,
+								"bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400":
+									currentUser?.credibilityScore >= 0 &&
+									currentUser?.credibilityScore < 50,
+								"bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400":
+									currentUser?.credibilityScore < 0,
+							})}
 						>
-							{userData.credibilityScore >= 80
-								? "Trustworthy Contributor"
-								: userData.credibilityScore >= 60
-									? "Reliable Member"
-									: "Community Member"}
+							{currentUser?.credibilityScore >= 50
+								? "Trustworthy"
+								: currentUser?.credibilityScore >= 0
+									? "Neutral"
+									: "Questionable"}
 						</Badge>
 					</div>
 					<div className="flex items-center gap-2">
 						<div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-							<div
-								className="h-full bg-green-500"
-								style={{ width: `${userData.credibilityScore}%` }}
+							<Progress
+								className={cn("", {
+									"[&>div]:bg-green-500": currentUser?.credibilityScore >= 50,
+									"[&>div]:bg-green-400":
+										currentUser?.credibilityScore >= 25 &&
+										currentUser?.credibilityScore < 50,
+									"[&>div]:bg-yellow-400":
+										currentUser?.credibilityScore >= 0 &&
+										currentUser?.credibilityScore < 25,
+									"[&>div]:bg-orange-400":
+										currentUser?.credibilityScore >= -50 &&
+										currentUser?.credibilityScore < 0,
+									"[&>div]:bg-red-500": currentUser?.credibilityScore < -50,
+								})}
+								value={((currentUser?.credibilityScore || 0) + 100) / 2}
+								max={100}
 							/>
 						</div>
 						<span className="font-medium text-sm">
-							{userData.credibilityScore}
+							{currentUser?.credibilityScore}
 						</span>
 					</div>
-				</div> */}
+				</div>
 
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>

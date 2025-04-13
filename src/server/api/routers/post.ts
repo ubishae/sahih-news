@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import {
-	posts as postsTable,
-	votes as votesTable,
-	voteTypes,
-} from "@/server/db/schema";
+import { posts as postsTable } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
